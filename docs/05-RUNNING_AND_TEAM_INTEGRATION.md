@@ -21,7 +21,7 @@ npm install   # first time only
 npm run dev
 ```
 
-**Browser:** open the URL Vite prints (usually **http://localhost:5173**). You should see the dashboard shell, nav links, and pages for Resources, Bookings, Tickets, Login.
+**Browser:** open the URL Vite prints (usually **http://localhost:5173**). You land on **`/app`** (student dashboard) with nav for Browse, My bookings, Report issue, Account, and Login. Use the header **Staff portal** checkbox to switch to **`/admin`** (staff dashboard and operations nav).
 
 **Quick API check** (optional, third terminal):
 
@@ -37,15 +37,26 @@ The app is **one** Spring Boot API under **`/api/v1`** and **one** React SPA. Au
 
 ### Frontend routes (`frontend/src/features/core/App.jsx`)
 
+Student portal **`/app/*`** and staff portal **`/admin/*`** share the same backend; each member (1–3) implements **both** surfaces for their domain on the same collections and REST paths.
+
 | Path | Owner area | Purpose |
 |------|------------|---------|
-| `/` | core | Dashboard |
+| `/` | core | Redirect → `/app` |
+| `/app` | core | Student dashboard (cards / links) |
+| `/app/resources` | facilities | Browse spaces & equipment (Member 1) |
+| `/app/bookings` | bookings | My bookings / request flow (Member 2) |
+| `/app/report` | maintenance | Report a problem (Member 3; user-facing copy) |
+| `/app/account` | auth | Account stub (Member 4) |
+| `/admin` | core | Staff dashboard |
+| `/admin/resources` | facilities | Manage resource catalogue (Member 1) |
+| `/admin/bookings` | bookings | Booking approvals (Member 2) |
+| `/admin/incidents` | maintenance | Incident / ticket console (Member 3) |
+| `/admin/users` | auth | Users MVP placeholder (Member 4) |
 | `/login` | auth | Login placeholder (OAuth later) |
-| `/resources` | facilities | Resource catalogue UI |
-| `/bookings` | bookings | Bookings UI |
-| `/tickets` | maintenance | Tickets UI |
 
-Nav + **AuthContext** (Admin view dev toggle) + **NotificationDropdown** live in `frontend/src/features/core/Layout.jsx`.
+**Legacy redirects:** `/resources` → `/app/resources`, `/bookings` → `/app/bookings`, `/tickets` → `/app/report`.
+
+Nav + **AuthContext** (URL-derived `isAdmin` / user id; **Staff portal** checkbox navigates `/app` ↔ `/admin`) + **NotificationDropdown** live in `frontend/src/features/core/Layout.jsx`.
 
 ### Backend REST surface (all under `/api/v1`)
 

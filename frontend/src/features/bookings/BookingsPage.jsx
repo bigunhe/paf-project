@@ -59,9 +59,13 @@ export default function BookingsPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-semibold text-slate-900">Bookings</h1>
+        <h1 className="text-2xl font-semibold text-slate-900">
+          {isAdmin ? 'Booking approvals' : 'My bookings'}
+        </h1>
         <p className="text-slate-500">
-          {isAdmin ? 'All booking requests (admin).' : 'Your booking requests.'}
+          {isAdmin
+            ? 'Review pending requests and approve or reject (Member 2 admin surface).'
+            : 'Request a slot and track your requests (Member 2 user surface).'}
         </p>
       </div>
 

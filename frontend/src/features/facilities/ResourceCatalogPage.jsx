@@ -52,8 +52,14 @@ export default function ResourceCatalogPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-semibold text-slate-900">Facilities catalogue</h1>
-        <p className="text-slate-500">Rooms, labs, and equipment (Member 1).</p>
+        <h1 className="text-2xl font-semibold text-slate-900">
+          {isAdmin ? 'Manage resource catalogue' : 'Browse spaces & equipment'}
+        </h1>
+        <p className="text-slate-500">
+          {isAdmin
+            ? 'Add, update, or retire resources (Member 1 admin surface).'
+            : 'Rooms, labs, and equipment you can book (Member 1 user surface).'}
+        </p>
       </div>
 
       {error && (

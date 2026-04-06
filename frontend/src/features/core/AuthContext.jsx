@@ -1,23 +1,25 @@
-import { createContext, useContext, useMemo, useState } from 'react'
+import { createContext, useContext, useMemo } from 'react'
+import { useLocation } from 'react-router-dom'
 import { DEV_ADMIN_ID, DEV_USER_ID } from './constants'
 
 const AuthContext = createContext(null)
 
+/**
+ * Staff vs student is derived from URL prefix /admin vs /app.
+ * Dev checkbox in Layout navigates between those prefixes.
+ */
 export function AuthProvider({ children }) {
-  const [currentUserId, setCurrentUserId] = useState(DEV_USER_ID)
-  const [isAdminView, setIsAdminView] = useState(false)
+  const location = useLocation()
+  const isStaffPortal = location.pathname.startsWith('/admin')
 
   const value = useMemo(
     () => ({
-      currentUserId: isAdminView ? DEV_ADMIN_ID : currentUserId,
-      actingUserId: currentUserId,
-      isAdminView,
-      setIsAdminView,
-      setCurrentUserId,
-      /** True when the effective API user is ADMIN (dev toggle). */
-      isAdmin: isAdminView,
+      currentUserId: isStaffPortal ? DEV_ADMIN_ID : DEV_USER_ID,
+      /** Alias for staff portal — same as previous isAdmin from checkbox. */
+      isAdmin: isStaffPortal,
+      isStaffPortal,
     }),
-    [currentUserId, isAdminView],
+    [isStaffPortal],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

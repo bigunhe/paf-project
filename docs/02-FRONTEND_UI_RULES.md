@@ -27,12 +27,32 @@ To ensure the app looks cohesive, stick strictly to this Tailwind color palette:
 
 ## 4. Routing Architecture (`App.jsx`)
 All routes must be centralized in `src/features/core/App.jsx` (root `src/App.jsx` re-exports this file).
-**Standardized Paths:**
-* `/` -> Dashboard (Shared Overview)
-* `/login` -> Auth (Member 4)
-* `/resources` -> Facilities Catalogue (Member 1)
-* `/bookings` -> User Bookings & Admin Approvals (Member 2)
-* `/tickets` -> Maintenance Incidents (Member 3)
+
+**Student portal (`/app/*`)** — end-user journeys (browse, request, report, account):
+
+* `/app` → Student dashboard (`UserDashboardPage`)
+* `/app/resources` → Browse catalogue (Member 1 user surface)
+* `/app/bookings` → My bookings (Member 2 user surface)
+* `/app/report` → Report a problem / incidents as student (Member 3 user surface; avoid “Maintenance” in labels)
+* `/app/account` → Account stub (Member 4; links to login)
+
+**Staff portal (`/admin/*`)** — operations / management:
+
+* `/admin` → Staff dashboard (`AdminDashboardPage`)
+* `/admin/resources` → Manage catalogue (Member 1 admin surface)
+* `/admin/bookings` → Booking approvals (Member 2 admin surface)
+* `/admin/incidents` → Incident console (Member 3 admin surface; same tickets API as `/app/report`)
+* `/admin/users` → Users placeholder (Member 4; connect `GET /api/v1/users` later)
+
+**Global:**
+
+* `/login` → Auth (Member 4)
+
+**Legacy redirects** (bookmarks): `/resources` → `/app/resources`, `/bookings` → `/app/bookings`, `/tickets` → `/app/report`. The root path `/` redirects to `/app`.
+
+**Auth in development:** `AuthContext` sets `currentUserId` and `isAdmin` from the URL: paths under `/admin` use the dev admin id and `isAdmin === true`; paths under `/app` (and elsewhere, e.g. `/login`) use the dev user id. The header **Staff portal** checkbox navigates between `/app` and `/admin` so the shell and API identity stay aligned.
+
+**Ownership:** Members 1–3 each own **both** the student and staff route for their domain against the **same** MongoDB collections and `/api/v1/...` contracts (see [01-BUSINESS_AND_DATA_MODEL.md](01-BUSINESS_AND_DATA_MODEL.md)).
 
 ## 5. State Management & API Calls
 * **API Client:** Use `axios`. Set the base URL to `http://localhost:8080/api/v1`.

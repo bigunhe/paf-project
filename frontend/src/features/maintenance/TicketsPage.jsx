@@ -128,16 +128,23 @@ export default function TicketsPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-semibold text-slate-900">Maintenance tickets</h1>
-        <p className="text-slate-500">{isAdmin ? 'All incidents (staff).' : 'Your reported incidents.'}</p>
+        <h1 className="text-2xl font-semibold text-slate-900">
+          {isAdmin ? 'Incidents & maintenance' : 'Report a problem'}
+        </h1>
+        <p className="text-slate-500">
+          {isAdmin
+            ? 'Triage reports, assign technicians, update status (Member 3 admin surface).'
+            : 'Tell us what needs fixing on campus — we will route it to facilities (Member 3 user surface).'}
+        </p>
       </div>
 
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-3">{error}</div>
       )}
 
+      {!isAdmin && (
       <form onSubmit={submit} className="bg-white border border-slate-200 rounded-lg shadow-sm p-6 grid gap-4 max-w-xl">
-        <h2 className="text-lg font-medium text-slate-900">Report an incident</h2>
+        <h2 className="text-lg font-medium text-slate-900">Tell us what happened</h2>
         <div className="grid gap-2">
           <label className="text-sm text-slate-500">Resource</label>
           <select
@@ -209,6 +216,7 @@ export default function TicketsPage() {
           Submit ticket
         </button>
       </form>
+      )}
 
       <div className="grid lg:grid-cols-2 gap-6">
         <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-x-auto">
