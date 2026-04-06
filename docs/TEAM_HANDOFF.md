@@ -19,9 +19,11 @@ Daily: pull latest `main`, merge into your feature branch, push your branch, ope
 
 **Run locally**
 
-1. **MongoDB** — required. See [MONGODB_SETUP.md](MONGODB_SETUP.md) (local install or free **MongoDB Atlas** cluster). There is no separate “Mongo project” in Java: only a connection URI and database name (`smartcampus` by default).
-2. **Backend:** `cd backend && ./mvnw spring-boot:run`
+1. **MongoDB** — required. See [MONGODB_SETUP.md](MONGODB_SETUP.md). Add **`backend/src/main/resources/application-local.properties`** with `spring.data.mongodb.uri=...` (file is gitignored — do not commit secrets).
+2. **Backend:** `cd backend && ./mvnw spring-boot:run -Dspring-boot.run.profiles=local`
 3. **Frontend:** `cd frontend && npm install && npm run dev`
+
+**Full run guide + how domains plug together:** [05-RUNNING_AND_TEAM_INTEGRATION.md](05-RUNNING_AND_TEAM_INTEGRATION.md)
 
 **Docs:** API and packaging rules in [03-BACKEND_API_RULES.md](03-BACKEND_API_RULES.md), UI and routes in [02-FRONTEND_UI_RULES.md](02-FRONTEND_UI_RULES.md), data shapes in [01-BUSINESS_AND_DATA_MODEL.md](01-BUSINESS_AND_DATA_MODEL.md), Git workflow in [04-GIT_AND_WORKFLOW.md](04-GIT_AND_WORKFLOW.md).
 

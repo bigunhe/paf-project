@@ -39,7 +39,9 @@ Interfaces like `UserRepository` and `NotificationRepository` extend `MongoRepos
 ## Quick verification checklist
 
 1. MongoDB reachable (local ping or Atlas string tested with mongosh).
-2. From `backend/`: `./mvnw spring-boot:run` starts without connection errors.
+2. From `backend/`: `./mvnw spring-boot:run -Dspring-boot.run.profiles=local` if you use **`application-local.properties`** for Atlas; otherwise plain `./mvnw spring-boot:run` for localhost URI in `application.properties`.
 3. Optional: `curl http://localhost:8080/api/v1/users` returns JSON (seeded dev users after first run).
 
 If the backend fails on startup with a **connection refused** error, MongoDB is not running or the URI host/port is wrong.
+
+After Mongo works, see **[05-RUNNING_AND_TEAM_INTEGRATION.md](05-RUNNING_AND_TEAM_INTEGRATION.md)** for running the full stack with the frontend.
