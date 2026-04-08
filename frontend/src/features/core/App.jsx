@@ -9,6 +9,7 @@ import AdminUsersPage from '../auth/AdminUsersPage'
 import ResourceCatalogPage from '../facilities/ResourceCatalogPage'
 import BookingsPage from '../bookings/BookingsPage'
 import TicketsPage from '../maintenance/TicketsPage'
+import ReadmeViewer from './ReadmeViewer'
 
 export default function App() {
   return (
@@ -22,6 +23,7 @@ export default function App() {
           <Route path="/" element={<Layout />}>
             <Route index element={<Navigate to="/app" replace />} />
             <Route path="login" element={<LoginPage />} />
+            <Route path="docs" element={<ReadmeViewer />} />
 
             <Route path="app" element={<Outlet />}>
               <Route index element={<UserDashboardPage />} />

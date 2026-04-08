@@ -1,6 +1,6 @@
 package com.smartcampus.maintenance;
 
-import com.smartcampus.maintenance.dto.TicketAssignmentPatchRequest;
+import com.smartcampus.maintenance.dto.TicketAssignmentRequest;
 import com.smartcampus.maintenance.dto.TicketCommentRequest;
 import com.smartcampus.maintenance.dto.TicketRequest;
 import com.smartcampus.maintenance.dto.TicketResponse;
@@ -46,16 +46,38 @@ public class TicketController {
 		return ticketService.create(request);
 	}
 
-	@PatchMapping("/{id}/status")
-	public TicketResponse patchStatus(
-			@PathVariable String id, @Valid @RequestBody TicketStatusPatchRequest body) {
-		return ticketService.patchStatus(id, body);
+	@PutMapping("/{id}")
+	public TicketResponse update(
+			@PathVariable String id,
+			@Valid @RequestBody TicketRequest request,
+			@RequestParam String userId,
+			@RequestParam(required = false, defaultValue = "false") boolean isAdmin) {
+		return ticketService.updateTicket(id, request, userId, isAdmin);
 	}
 
-	@PatchMapping("/{id}/assignment")
-	public TicketResponse patchAssignment(
-			@PathVariable String id, @Valid @RequestBody TicketAssignmentPatchRequest body) {
-		return ticketService.patchAssignment(id, body);
+	@DeleteMapping("/{id}")
+	@ResponseStatus(HttpStatus.NO_CONTENT)
+	public void delete(
+			@PathVariable String id,
+			@RequestParam String userId,
+			@RequestParam(required = false, defaultValue = "false") boolean isAdmin) {
+		ticketService.deleteTicket(id, userId, isAdmin);
+	}
+
+	@PatchMapping("/{id}/status")
+	public TicketResponse patchStatus(
+			@PathVariable String id, 
+			@Valid @RequestBody TicketStatusPatchRequest body,
+			@RequestParam(required = false, defaultValue = "false") boolean isAdmin) {
+		return ticketService.patchStatus(id, body, isAdmin);
+	}
+
+	@PutMapping("/{id}/assign")
+	public TicketResponse assignTechnician(
+			@PathVariable String id, 
+			@Valid @RequestBody TicketAssignmentRequest body,
+			@RequestParam(required = false, defaultValue = "false") boolean isAdmin) {
+		return ticketService.assignTechnician(id, body, isAdmin);
 	}
 
 	@PostMapping("/{id}/comments")
