@@ -11,6 +11,7 @@ public record ResourceRequest(
 		@NotNull ResourceType type,
 		@Min(0) int capacity,
 		@NotBlank String location,
+		@NotBlank String availabilityWindow,
 		@NotNull ResourceStatus status
 ) {
 }

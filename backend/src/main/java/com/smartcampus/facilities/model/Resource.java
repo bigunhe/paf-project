@@ -20,5 +20,6 @@ public class Resource {
 	private ResourceType type;
 	private int capacity;
 	private String location;
+	private String availabilityWindow;
 	private ResourceStatus status;
 }

@@ -9,6 +9,7 @@ public record ResourceResponse(
 		ResourceType type,
 		int capacity,
 		String location,
+		String availabilityWindow,
 		ResourceStatus status
 ) {
 }
