@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -61,5 +63,23 @@ public class TicketController {
 	public TicketResponse addComment(
 			@PathVariable String id, @Valid @RequestBody TicketCommentRequest body) {
 		return ticketService.addComment(id, body);
+	}
+
+	@PutMapping("/{id}/comments/{commentId}")
+	public TicketResponse updateComment(
+			@PathVariable String id,
+			@PathVariable String commentId,
+			@Valid @RequestBody TicketCommentRequest body,
+			@RequestParam(required = false, defaultValue = "false") boolean isAdmin) {
+		return ticketService.updateComment(id, commentId, body, isAdmin);
+	}
+
+	@DeleteMapping("/{id}/comments/{commentId}")
+	public TicketResponse deleteComment(
+			@PathVariable String id,
+			@PathVariable String commentId,
+			@RequestParam String userId,
+			@RequestParam(required = false, defaultValue = "false") boolean isAdmin) {
+		return ticketService.deleteComment(id, commentId, userId, isAdmin);
 	}
 }

@@ -1,5 +1,6 @@
 package com.smartcampus.maintenance;
 
+import com.smartcampus.core.exception.ForbiddenException;
 import com.smartcampus.core.exception.ResourceNotFoundException;
 import com.smartcampus.facilities.ResourceService;
 import com.smartcampus.maintenance.dto.TicketAssignmentPatchRequest;
@@ -112,6 +113,50 @@ public class TicketService {
 			t.setComments(new ArrayList<>());
 		}
 		t.getComments().add(c);
+		return toResponse(ticketRepository.save(t));
+	}
+
+	public TicketResponse updateComment(String id, String commentId, TicketCommentRequest req, boolean isAdmin) {
+		Ticket t = ticketRepository
+				.findById(id)
+				.orElseThrow(() -> new ResourceNotFoundException("Ticket not found: " + id));
+		
+		if (t.getComments() == null) {
+			throw new ResourceNotFoundException("Comment not found: " + commentId);
+		}
+		
+		TicketComment comment = t.getComments().stream()
+				.filter(c -> c.getCommentId().equals(commentId))
+				.findFirst()
+				.orElseThrow(() -> new ResourceNotFoundException("Comment not found: " + commentId));
+				
+		if (!comment.getUserId().equals(req.userId()) && !isAdmin) {
+			throw new ForbiddenException("You do not have permission to edit this comment.");
+		}
+		
+		comment.setContent(req.content());
+		return toResponse(ticketRepository.save(t));
+	}
+
+	public TicketResponse deleteComment(String id, String commentId, String requestUserId, boolean isAdmin) {
+		Ticket t = ticketRepository
+				.findById(id)
+				.orElseThrow(() -> new ResourceNotFoundException("Ticket not found: " + id));
+
+		if (t.getComments() == null) {
+			throw new ResourceNotFoundException("Comment not found: " + commentId);
+		}
+
+		TicketComment comment = t.getComments().stream()
+				.filter(c -> c.getCommentId().equals(commentId))
+				.findFirst()
+				.orElseThrow(() -> new ResourceNotFoundException("Comment not found: " + commentId));
+
+		if (!comment.getUserId().equals(requestUserId) && !isAdmin) {
+			throw new ForbiddenException("You do not have permission to delete this comment.");
+		}
+
+		t.getComments().remove(comment);
 		return toResponse(ticketRepository.save(t));
 	}
 
