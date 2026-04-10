@@ -28,6 +28,7 @@ export default function ResourceCatalogPage() {
   const [form, setForm] = useState(INITIAL_FORM)
   const [filters, setFilters] = useState(INITIAL_FILTERS)
   const [error, setError] = useState('')
+  const [formErrors, setFormErrors] = useState({})
   const [editingId, setEditingId] = useState('')
 
   const load = async () => {
@@ -39,9 +40,30 @@ export default function ResourceCatalogPage() {
     load().catch((e) => setError(e.response?.data?.message || e.message))
   }, [])
 
+  const validateForm = (value) => {
+    const nextErrors = {}
+
+    if (!value.name.trim()) nextErrors.name = 'Name is required.'
+    if (!value.location.trim()) nextErrors.location = 'Location is required.'
+    if (!value.availabilityWindow.trim()) nextErrors.availabilityWindow = 'Availability window is required.'
+    if (!Number.isInteger(value.capacity) || value.capacity < 0) {
+      nextErrors.capacity = 'Capacity must be 0 or higher.'
+    }
+
+    return nextErrors
+  }
+
   const submit = async (e) => {
     e.preventDefault()
     setError('')
+    const nextErrors = validateForm(form)
+
+    if (Object.keys(nextErrors).length > 0) {
+      setFormErrors(nextErrors)
+      return
+    }
+
+    setFormErrors({})
     try {
       if (editingId) {
         await api.put(`/resources/${editingId}`, form)
@@ -58,6 +80,7 @@ export default function ResourceCatalogPage() {
 
   const startEdit = (resource) => {
     setEditingId(resource.id)
+    setFormErrors({})
     setForm({
       name: resource.name || '',
       type: resource.type || 'ROOM',
@@ -70,6 +93,7 @@ export default function ResourceCatalogPage() {
 
   const cancelEdit = () => {
     setEditingId('')
+    setFormErrors({})
     setForm(INITIAL_FORM)
   }
 
@@ -240,9 +264,20 @@ export default function ResourceCatalogPage() {
             <input
               required
               value={form.name}
-              onChange={(e) => setForm((current) => ({ ...current, name: e.target.value }))}
+              onChange={(e) => {
+                const value = e.target.value
+                setForm((current) => ({ ...current, name: value }))
+                if (formErrors.name) {
+                  setFormErrors((current) => {
+                    const next = { ...current }
+                    delete next.name
+                    return next
+                  })
+                }
+              }}
               className="border border-slate-200 rounded-lg px-3 py-2"
             />
+            {formErrors.name && <p className="text-xs text-red-600">{formErrors.name}</p>}
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
@@ -267,9 +302,20 @@ export default function ResourceCatalogPage() {
                 min={0}
                 required
                 value={form.capacity}
-                onChange={(e) => setForm((current) => ({ ...current, capacity: Number(e.target.value) }))}
+                onChange={(e) => {
+                  const value = e.target.value === '' ? 0 : Number(e.target.value)
+                  setForm((current) => ({ ...current, capacity: value }))
+                  if (formErrors.capacity) {
+                    setFormErrors((current) => {
+                      const next = { ...current }
+                      delete next.capacity
+                      return next
+                    })
+                  }
+                }}
                 className="border border-slate-200 rounded-lg px-3 py-2"
               />
+              {formErrors.capacity && <p className="text-xs text-red-600">{formErrors.capacity}</p>}
             </div>
           </div>
 
@@ -279,9 +325,20 @@ export default function ResourceCatalogPage() {
               <input
                 required
                 value={form.location}
-                onChange={(e) => setForm((current) => ({ ...current, location: e.target.value }))}
+                onChange={(e) => {
+                  const value = e.target.value
+                  setForm((current) => ({ ...current, location: value }))
+                  if (formErrors.location) {
+                    setFormErrors((current) => {
+                      const next = { ...current }
+                      delete next.location
+                      return next
+                    })
+                  }
+                }}
                 className="border border-slate-200 rounded-lg px-3 py-2"
               />
+              {formErrors.location && <p className="text-xs text-red-600">{formErrors.location}</p>}
             </div>
             <div className="grid gap-2">
               <label className="text-sm text-slate-500">Status</label>
@@ -304,10 +361,23 @@ export default function ResourceCatalogPage() {
             <input
               required
               value={form.availabilityWindow}
-              onChange={(e) => setForm((current) => ({ ...current, availabilityWindow: e.target.value }))}
+              onChange={(e) => {
+                const value = e.target.value
+                setForm((current) => ({ ...current, availabilityWindow: value }))
+                if (formErrors.availabilityWindow) {
+                  setFormErrors((current) => {
+                    const next = { ...current }
+                    delete next.availabilityWindow
+                    return next
+                  })
+                }
+              }}
               placeholder="Mon-Fri 08:00-18:00"
               className="border border-slate-200 rounded-lg px-3 py-2"
             />
+            {formErrors.availabilityWindow && (
+              <p className="text-xs text-red-600">{formErrors.availabilityWindow}</p>
+            )}
           </div>
 
           <div className="flex flex-wrap gap-3">
