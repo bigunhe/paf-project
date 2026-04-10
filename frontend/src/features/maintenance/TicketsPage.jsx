@@ -3,6 +3,7 @@ import api from '../core/api'
 import { useAuth } from '../core/AuthContext'
 import { Edit2, Trash2, CheckCircle, Wrench, ChevronRight, MessageSquare } from 'lucide-react'
 
+const CATEGORIES = ['Electrical', 'Network', 'Hardware']
 const PRIORITIES = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']
 const STATUSES = ['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED', 'REJECTED']
 
@@ -262,13 +263,17 @@ export default function TicketsPage() {
         
         <div className="grid gap-2">
           <label className="text-sm font-medium text-slate-700">Category</label>
-          <input
+          <select
             required
-            placeholder="e.g. Broken Projector"
             value={form.category}
             onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
-            className="border border-slate-200 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-          />
+            className="border border-slate-200 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none transition-all bg-white"
+          >
+            <option value="" disabled>Select a category</option>
+            {CATEGORIES.map((c) => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </select>
         </div>
 
         <div className="grid gap-2">
@@ -423,7 +428,10 @@ export default function TicketsPage() {
                 <div className="grid gap-3">
                   <div className="grid gap-1">
                      <label className="text-xs font-semibold text-slate-600 uppercase">Category</label>
-                     <input value={editForm.category} onChange={e => setEditForm(f => ({...f, category: e.target.value}))} className="border border-slate-200 rounded p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                     <select required value={editForm.category} onChange={e => setEditForm(f => ({...f, category: e.target.value}))} className="border border-slate-200 rounded p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white">
+                       <option value="" disabled>Select a category</option>
+                       {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                     </select>
                   </div>
                   <div className="grid gap-1">
                      <label className="text-xs font-semibold text-slate-600 uppercase">Description</label>
