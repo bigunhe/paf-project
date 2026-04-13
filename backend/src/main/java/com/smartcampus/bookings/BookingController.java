@@ -77,4 +77,9 @@ public class BookingController {
 	public BookingResponseDTO cancelBooking(@PathVariable String id, @RequestParam String userId) {
 		return bookingService.cancelBooking(id, userId);
 	}
+
+	@PutMapping("/{id}/remove-rejected")
+	public BookingResponseDTO removeRejectedBooking(@PathVariable String id, @RequestParam String userId) {
+		return bookingService.removeRejectedBooking(id, userId);
+	}
 }

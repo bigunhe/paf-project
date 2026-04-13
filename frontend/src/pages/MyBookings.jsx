@@ -13,6 +13,7 @@ export default function MyBookings() {
   const [submitting, setSubmitting] = useState(false)
   const [editingId, setEditingId] = useState('')
   const [cancellingId, setCancellingId] = useState('')
+  const [removingId, setRemovingId] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingBooking, setEditingBooking] = useState(null)
 
@@ -23,7 +24,7 @@ export default function MyBookings() {
         api.get('/bookings/my', { params: { userId: currentUserId } }),
         api.get('/resources'),
       ])
-      setBookings(bookingData)
+      setBookings(bookingData.filter((booking) => booking.status !== 'CANCELLED'))
       setResources(resourceData)
     } catch (error) {
       if (!error.response) {
@@ -109,11 +110,35 @@ export default function MyBookings() {
         params: { userId: currentUserId },
       })
       toast.success('Booking cancelled')
-      await loadData()
+      setBookings((prev) => prev.filter((item) => item.id !== booking.id))
     } catch (error) {
       toast.error(error.response?.data?.message || 'Cancel failed')
     } finally {
       setCancellingId('')
+    }
+  }
+
+  const handleRemoveRejectedBooking = async (booking) => {
+    if (booking.status !== 'REJECTED') {
+      return
+    }
+
+    const confirmed = window.confirm('Remove this rejected booking from your list?')
+    if (!confirmed) {
+      return
+    }
+
+    setRemovingId(booking.id)
+    try {
+      await api.put(`/bookings/${booking.id}/remove-rejected`, null, {
+        params: { userId: currentUserId },
+      })
+      toast.success('Rejected booking removed')
+      setBookings((prev) => prev.filter((item) => item.id !== booking.id))
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Remove failed')
+    } finally {
+      setRemovingId('')
     }
   }
 
@@ -156,6 +181,8 @@ export default function MyBookings() {
               onEdit={handleOpenEditBooking}
               cancelling={cancellingId === booking.id}
               onCancel={handleCancelBooking}
+              removing={removingId === booking.id}
+              onRemoveRejected={handleRemoveRejectedBooking}
             />
           ))}
         </div>

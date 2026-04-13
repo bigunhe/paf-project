@@ -206,6 +206,20 @@ public class BookingService {
 		return toResponse(saved);
 	}
 
+	public BookingResponseDTO removeRejectedBooking(String bookingId, String userId) {
+		Booking booking = getBookingOrThrow(bookingId);
+		if (!booking.getUserId().equals(userId)) {
+			throw new IllegalArgumentException("Only the booking owner can remove this booking");
+		}
+		if (booking.getStatus() != BookingStatus.REJECTED) {
+			throw new ConflictException("Only REJECTED bookings can be removed");
+		}
+
+		booking.setStatus(BookingStatus.CANCELLED);
+		Booking saved = bookingRepository.save(booking);
+		return toResponse(saved);
+	}
+
 	private Booking getBookingOrThrow(String id) {
 		return bookingRepository.findById(id)
 				.orElseThrow(() -> new ResourceNotFoundException("Booking not found: " + id));
