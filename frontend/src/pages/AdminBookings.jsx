@@ -82,9 +82,6 @@ export default function AdminBookings() {
           <div>
             <h1 className="text-4xl font-bold tracking-tight text-slate-900">Booking Requests</h1>
             <div className="mt-2 flex items-center gap-3">
-              <span className="rounded-full bg-sky-900 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-white">
-                Active Operations
-              </span>
               <span className="text-sm font-medium text-slate-400">{totalBookings.toLocaleString()} total bookings recorded this semester</span>
             </div>
           </div>
