@@ -224,48 +224,48 @@ export default function MyBookings() {
               No upcoming approved bookings right now.
             </div>
           ) : (
-            <div className="grid gap-3 lg:grid-cols-2">
+            <div className="grid gap-2 lg:grid-cols-2 xl:grid-cols-3">
               {nextUpBookings.map((booking) => (
                 <article
                   key={`next-${booking.id}`}
-                  className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 shadow-[0_10px_26px_-22px_rgba(15,23,42,0.6)]"
+                  className="rounded-xl border border-slate-200 bg-white p-3 shadow-[0_10px_18px_-18px_rgba(15,23,42,0.55)]"
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <div className="grid h-10 w-10 place-items-center rounded-xl bg-blue-100 text-blue-700">⌂</div>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <div className="grid h-8 w-8 place-items-center rounded-lg bg-blue-100 text-blue-700 text-xs">⌂</div>
                       <div>
-                        <h3 className="text-2xl font-semibold leading-tight text-slate-900">{booking.resourceName}</h3>
-                        <p className="text-sm text-slate-500">{booking.faculty || booking.resourceId}</p>
+                        <h3 className="text-lg font-semibold leading-tight text-slate-900">{booking.resourceName}</h3>
+                        <p className="text-xs text-slate-500">{booking.faculty || booking.resourceId}</p>
                       </div>
                     </div>
-                    <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-blue-700">
+                    <span className="rounded-full bg-blue-100 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-blue-700">
                       Next Up
                     </span>
                   </div>
 
-                  <div className="mt-4 grid gap-3 sm:grid-cols-4">
+                  <div className="mt-3 grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
                     <div>
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">Date</p>
-                      <p className="text-base font-semibold text-slate-800">{formatPrettyDate(booking.date)}</p>
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">Date</p>
+                      <p className="text-sm font-semibold text-slate-800">{formatPrettyDate(booking.date)}</p>
                     </div>
                     <div>
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">Time</p>
-                      <p className="text-base font-semibold text-slate-800">{booking.startTime} - {booking.endTime}</p>
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">Time</p>
+                      <p className="text-sm font-semibold text-slate-800">{booking.startTime} - {booking.endTime}</p>
                     </div>
                     <div>
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">Capacity</p>
-                      <p className="text-base font-semibold text-slate-800">{booking.attendeesCount} People</p>
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">Capacity</p>
+                      <p className="text-sm font-semibold text-slate-800">{booking.attendeesCount} People</p>
                     </div>
                     <div>
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">Status</p>
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">Status</p>
                       <p className="text-sm font-semibold text-blue-700">Approved</p>
                     </div>
                   </div>
 
-                  <div className="mt-4 flex flex-wrap gap-2">
+                  <div className="mt-3 flex gap-2">
                     <button
                       type="button"
-                      className="min-w-44 flex-1 rounded-xl bg-blue-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-800"
+                      className="flex-1 rounded-lg bg-blue-700 px-3 py-2 text-sm font-semibold text-white transition hover:bg-blue-800"
                     >
                       Entry Pass
                     </button>
@@ -273,7 +273,7 @@ export default function MyBookings() {
                       type="button"
                       disabled={cancellingId === booking.id}
                       onClick={() => handleCancelBooking(booking)}
-                      className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       {cancellingId === booking.id ? 'Cancelling...' : 'Cancel'}
                     </button>
