@@ -106,15 +106,16 @@ export default function BookingFormModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-slate-900/50 px-4 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/50 px-4 py-6 backdrop-blur-sm">
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-2xl rounded-2xl border border-white/50 bg-white/75 p-6 shadow-[0_20px_45px_-18px_rgba(15,23,42,0.5)] backdrop-blur-md"
+        className="mx-auto w-full max-w-3xl rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_24px_46px_-24px_rgba(15,23,42,0.5)]"
       >
         <div className="mb-6 flex items-start justify-between gap-3">
           <div>
-            <h2 className="text-2xl font-semibold text-slate-900">Request Booking</h2>
-            <p className="text-sm text-slate-600">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Institutional Logistics</p>
+            <h2 className="text-4xl font-bold tracking-tight text-slate-900">Booking Request</h2>
+            <p className="mt-1 text-sm text-slate-500">
               {mode === 'edit' ? 'Update your pending request details.' : 'Fill in your slot request details.'}
             </p>
           </div>
@@ -133,126 +134,148 @@ export default function BookingFormModal({
           </div>
         )}
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <label className="grid gap-1 text-sm text-slate-700">
-            Student ID
-            <input
-              type="text"
-              required
-              value={form.studentId}
-              onChange={(event) => setForm((prev) => ({ ...prev, studentId: event.target.value }))}
-              placeholder="IT23566552"
-              className="rounded-xl border border-slate-300/80 bg-white/80 px-3 py-2 focus:border-cyan-500 focus:outline-none"
-            />
-          </label>
+        <div className="space-y-5">
+          <section className="space-y-3 rounded-xl border border-slate-200 bg-slate-50/60 p-4">
+            <h3 className="text-sm font-semibold text-slate-800">Student Identification</h3>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="grid gap-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Student ID
+                <input
+                  type="text"
+                  required
+                  value={form.studentId}
+                  onChange={(event) => setForm((prev) => ({ ...prev, studentId: event.target.value }))}
+                  placeholder="IT23566552"
+                  className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 focus:border-cyan-500 focus:outline-none"
+                />
+              </label>
 
-          <label className="grid gap-1 text-sm text-slate-700">
-            Student Name
-            <input
-              type="text"
-              required
-              value={form.studentName}
-              onChange={(event) => setForm((prev) => ({ ...prev, studentName: event.target.value }))}
-              placeholder="Shyni Atapattu"
-              className="rounded-xl border border-slate-300/80 bg-white/80 px-3 py-2 focus:border-cyan-500 focus:outline-none"
-            />
-          </label>
+              <label className="grid gap-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Student Name
+                <input
+                  type="text"
+                  required
+                  value={form.studentName}
+                  onChange={(event) => setForm((prev) => ({ ...prev, studentName: event.target.value }))}
+                  placeholder="Shyni Atapattu"
+                  className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 focus:border-cyan-500 focus:outline-none"
+                />
+              </label>
+            </div>
 
-          <label className="grid gap-1 text-sm text-slate-700 sm:col-span-2">
-            Faculty/Department
-            <input
-              type="text"
-              required
-              value={form.faculty}
-              onChange={(event) => setForm((prev) => ({ ...prev, faculty: event.target.value }))}
-              placeholder="Computing"
-              className="rounded-xl border border-slate-300/80 bg-white/80 px-3 py-2 focus:border-cyan-500 focus:outline-none"
-            />
-          </label>
+            <label className="grid gap-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Faculty / Department
+              <input
+                type="text"
+                required
+                value={form.faculty}
+                onChange={(event) => setForm((prev) => ({ ...prev, faculty: event.target.value }))}
+                placeholder="Computing"
+                className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 focus:border-cyan-500 focus:outline-none"
+              />
+            </label>
+          </section>
 
-          <label className="grid gap-1 text-sm text-slate-700">
-            Resource
-            <select
-              value={form.resourceId}
-              onChange={(event) => setForm((prev) => ({ ...prev, resourceId: event.target.value }))}
-              className="rounded-xl border border-slate-300/80 bg-white/80 px-3 py-2 focus:border-cyan-500 focus:outline-none"
-            >
-              {resourceOptions.map((resource) => (
-                <option key={resource.id} value={resource.id}>
-                  {resource.name} ({resource.type})
-                </option>
-              ))}
-            </select>
-          </label>
+          <section className="space-y-3 rounded-xl border border-slate-200 bg-slate-50/60 p-4">
+            <h3 className="text-sm font-semibold text-slate-800">Resource Selection</h3>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="grid gap-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Resource
+                <select
+                  value={form.resourceId}
+                  onChange={(event) => setForm((prev) => ({ ...prev, resourceId: event.target.value }))}
+                  className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 focus:border-cyan-500 focus:outline-none"
+                >
+                  {resourceOptions.map((resource) => (
+                    <option key={resource.id} value={resource.id}>
+                      {resource.name} ({resource.type})
+                    </option>
+                  ))}
+                </select>
+              </label>
 
-          <label className="grid gap-1 text-sm text-slate-700">
-            Resource Name
-            <input
-              type="text"
-              readOnly
-              value={selectedResource?.name || ''}
-              className="rounded-xl border border-slate-200 bg-slate-100/80 px-3 py-2 text-slate-600"
-            />
-          </label>
+              <label className="grid gap-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Resource Name
+                <input
+                  type="text"
+                  readOnly
+                  value={selectedResource?.name || ''}
+                  className="rounded-lg border border-slate-200 bg-slate-100 px-3 py-2 text-sm font-medium text-slate-600"
+                />
+              </label>
+            </div>
+          </section>
 
-          <label className="grid gap-1 text-sm text-slate-700">
-            Date
-            <input
-              type="date"
-              min={getToday()}
-              required
-              value={form.date}
-              onChange={(event) => setForm((prev) => ({ ...prev, date: event.target.value }))}
-              className="rounded-xl border border-slate-300/80 bg-white/80 px-3 py-2 focus:border-cyan-500 focus:outline-none"
-            />
-          </label>
+          <section className="space-y-3 rounded-xl border border-slate-200 bg-slate-50/60 p-4">
+            <h3 className="text-sm font-semibold text-slate-800">Scheduling Details</h3>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <label className="grid gap-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Date
+                <input
+                  type="date"
+                  min={getToday()}
+                  required
+                  value={form.date}
+                  onChange={(event) => setForm((prev) => ({ ...prev, date: event.target.value }))}
+                  className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 focus:border-cyan-500 focus:outline-none"
+                />
+              </label>
 
-          <label className="grid gap-1 text-sm text-slate-700">
-            Start Time
-            <input
-              type="time"
-              required
-              value={form.startTime}
-              onChange={(event) => setForm((prev) => ({ ...prev, startTime: event.target.value }))}
-              className="rounded-xl border border-slate-300/80 bg-white/80 px-3 py-2 focus:border-cyan-500 focus:outline-none"
-            />
-          </label>
+              <label className="grid gap-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Start Time
+                <input
+                  type="time"
+                  required
+                  value={form.startTime}
+                  onChange={(event) => setForm((prev) => ({ ...prev, startTime: event.target.value }))}
+                  className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 focus:border-cyan-500 focus:outline-none"
+                />
+              </label>
 
-          <label className="grid gap-1 text-sm text-slate-700">
-            End Time
-            <input
-              type="time"
-              min={form.startTime || undefined}
-              required
-              value={form.endTime}
-              onChange={(event) => setForm((prev) => ({ ...prev, endTime: event.target.value }))}
-              className="rounded-xl border border-slate-300/80 bg-white/80 px-3 py-2 focus:border-cyan-500 focus:outline-none"
-            />
-          </label>
+              <label className="grid gap-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                End Time
+                <input
+                  type="time"
+                  min={form.startTime || undefined}
+                  required
+                  value={form.endTime}
+                  onChange={(event) => setForm((prev) => ({ ...prev, endTime: event.target.value }))}
+                  className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 focus:border-cyan-500 focus:outline-none"
+                />
+              </label>
+            </div>
+          </section>
 
-          <label className="grid gap-1 text-sm text-slate-700 sm:col-span-2">
-            Purpose
-            <textarea
-              required
-              rows={3}
-              maxLength={240}
-              value={form.purpose}
-              onChange={(event) => setForm((prev) => ({ ...prev, purpose: event.target.value }))}
-              className="rounded-xl border border-slate-300/80 bg-white/80 px-3 py-2 focus:border-cyan-500 focus:outline-none"
-            />
-          </label>
+          <section className="space-y-3 rounded-xl border border-slate-200 bg-slate-50/60 p-4">
+            <h3 className="text-sm font-semibold text-slate-800">Purpose & Attendees</h3>
+            <label className="grid gap-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Research Purpose / Description
+              <textarea
+                required
+                rows={3}
+                maxLength={240}
+                value={form.purpose}
+                onChange={(event) => setForm((prev) => ({ ...prev, purpose: event.target.value }))}
+                className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 focus:border-cyan-500 focus:outline-none"
+              />
+            </label>
 
-          <label className="grid gap-1 text-sm text-slate-700">
-            Attendees
-            <input
-              type="number"
-              min={1}
-              required
-              value={form.attendeesCount}
-              onChange={(event) => setForm((prev) => ({ ...prev, attendeesCount: event.target.value }))}
-              className="rounded-xl border border-slate-300/80 bg-white/80 px-3 py-2 focus:border-cyan-500 focus:outline-none"
-            />
-          </label>
+            <label className="grid max-w-xs gap-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Number Of Attendees
+              <input
+                type="number"
+                min={1}
+                required
+                value={form.attendeesCount}
+                onChange={(event) => setForm((prev) => ({ ...prev, attendeesCount: event.target.value }))}
+                className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 focus:border-cyan-500 focus:outline-none"
+              />
+            </label>
+          </section>
+
+          <div className="flex items-center justify-between gap-3 text-xs text-slate-500">
+            <span>Responses are typically processed within 24 business hours.</span>
+          </div>
         </div>
 
         <div className="mt-6 flex justify-end gap-3">

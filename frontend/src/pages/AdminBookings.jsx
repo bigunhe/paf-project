@@ -72,41 +72,91 @@ export default function AdminBookings() {
     }
   }
 
+  const totalBookings = bookings.length
+  const resourceOptions = [...new Set(bookings.map((booking) => booking.resourceName).filter(Boolean))]
+
   return (
     <section className="space-y-6">
-      <div className="rounded-2xl border border-sky-100 bg-gradient-to-br from-sky-50 via-white to-cyan-50 p-6 shadow-[0_16px_40px_-24px_rgba(8,145,178,0.5)]">
-        <h1 className="text-2xl font-bold text-slate-900">Admin Bookings</h1>
-        <p className="mt-1 text-sm text-slate-600">Review requests and decide quickly with status filters.</p>
+      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_18px_34px_-26px_rgba(15,23,42,0.45)]">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h1 className="text-4xl font-bold tracking-tight text-slate-900">Admin Bookings Registry</h1>
+            <div className="mt-2 flex items-center gap-3">
+              <span className="rounded-full bg-sky-900 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-white">
+                Active Operations
+              </span>
+              <span className="text-sm font-medium text-slate-400">{totalBookings.toLocaleString()} total bookings recorded this semester</span>
+            </div>
+          </div>
 
-        <div className="mt-4 grid gap-3 sm:grid-cols-2">
-          <label className="grid gap-1 text-sm text-slate-700">
-            Status Filter
-            <select
-              value={filters.status}
-              onChange={(event) => setFilters((prev) => ({ ...prev, status: event.target.value }))}
-              className="rounded-xl border border-slate-300/80 bg-white/80 px-3 py-2"
-            >
-              {STATUS_OPTIONS.map((status) => (
-                <option key={status || 'ALL'} value={status}>
-                  {status || 'ALL'}
-                </option>
-              ))}
-            </select>
-          </label>
+          <button
+            type="button"
+            className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+          >
+            Export CSV
+          </button>
+        </div>
 
-          <label className="grid gap-1 text-sm text-slate-700">
-            Date Filter
-            <input
-              type="date"
-              value={filters.date}
-              onChange={(event) => setFilters((prev) => ({ ...prev, date: event.target.value }))}
-              className="rounded-xl border border-slate-300/80 bg-white/80 px-3 py-2"
-            />
-          </label>
+        <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="mr-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Filter by Status</span>
+              {STATUS_OPTIONS.map((statusOption) => {
+                const value = statusOption
+                const active = filters.status === value
+                return (
+                  <button
+                    key={statusOption || 'ALL'}
+                    type="button"
+                    onClick={() => setFilters((prev) => ({ ...prev, status: value }))}
+                    className={`rounded-lg px-3 py-1.5 text-sm font-semibold transition ${
+                      active ? 'bg-sky-900 text-white' : 'bg-white text-slate-600 hover:bg-slate-100'
+                    }`}
+                  >
+                    {statusOption || 'All'}
+                  </button>
+                )
+              })}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Resource</span>
+              <select
+                value=""
+                onChange={() => {}}
+                className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600"
+              >
+                <option value="">All Resources</option>
+                {resourceOptions.map((resourceName) => (
+                  <option key={resourceName} value={resourceName}>
+                    {resourceName}
+                  </option>
+                ))}
+              </select>
+
+              <label className="flex items-center gap-2 text-sm text-slate-600">
+                <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Date</span>
+                <input
+                  type="date"
+                  value={filters.date}
+                  onChange={(event) => setFilters((prev) => ({ ...prev, date: event.target.value }))}
+                  className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                />
+              </label>
+
+              <button
+                type="button"
+                onClick={() => setFilters({ status: '', date: '' })}
+                className="text-sm font-semibold text-sky-700 hover:text-sky-900"
+              >
+                Reset Filters
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-2xl border border-white/50 bg-white/65 shadow-[0_10px_34px_-20px_rgba(15,23,42,0.45)] backdrop-blur-md">
+      <div className="overflow-x-auto rounded-3xl border border-slate-200 bg-white shadow-[0_18px_34px_-26px_rgba(15,23,42,0.45)]">
         {loading ? (
           <div className="grid place-items-center py-16">
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-cyan-200 border-t-cyan-600" />
@@ -116,46 +166,46 @@ export default function AdminBookings() {
             <p className="text-sm text-slate-500">No bookings match your filters.</p>
           </div>
         ) : (
-          <table className="w-full min-w-[760px] text-sm">
-            <thead className="border-b border-slate-200/80 bg-white/70 text-left text-slate-600">
+          <table className="w-full min-w-[980px] text-sm">
+            <thead className="border-b border-slate-200 bg-slate-50 text-left text-slate-500">
               <tr>
-                <th className="px-4 py-3">User</th>
-                <th className="px-4 py-3">Student</th>
-                <th className="px-4 py-3">Faculty</th>
-                <th className="px-4 py-3">Resource</th>
-                <th className="px-4 py-3">Date</th>
-                <th className="px-4 py-3">Time</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Action</th>
+                <th className="px-4 py-4 text-[11px] font-semibold uppercase tracking-[0.18em]">User Details</th>
+                <th className="px-4 py-4 text-[11px] font-semibold uppercase tracking-[0.18em]">Faculty</th>
+                <th className="px-4 py-4 text-[11px] font-semibold uppercase tracking-[0.18em]">Resource</th>
+                <th className="px-4 py-4 text-[11px] font-semibold uppercase tracking-[0.18em]">Date & Time</th>
+                <th className="px-4 py-4 text-[11px] font-semibold uppercase tracking-[0.18em]">Status</th>
+                <th className="px-4 py-4 text-[11px] font-semibold uppercase tracking-[0.18em]">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100/80">
+            <tbody className="divide-y divide-slate-100">
               {bookings.map((booking) => {
                 const actionDisabled = booking.status !== 'PENDING' || actionId === booking.id
 
                 return (
                   <tr key={booking.id} className="transition hover:bg-slate-50/70">
-                    <td className="px-4 py-3 font-medium text-slate-700">{booking.userId}</td>
-                    <td className="px-4 py-3 text-slate-700">
-                      <div className="font-medium">{booking.studentName}</div>
-                      <div className="text-xs text-slate-500">{booking.studentId}</div>
+                    <td className="px-4 py-4">
+                      <div className="font-semibold text-slate-800">{booking.studentName || booking.userId}</div>
+                      <div className="text-xs text-slate-500">SID: {booking.studentId || '-'}</div>
                     </td>
-                    <td className="px-4 py-3 text-slate-700">{booking.faculty}</td>
-                    <td className="px-4 py-3 text-slate-700">{booking.resourceName}</td>
-                    <td className="px-4 py-3 text-slate-600">{displayDate(booking.date)}</td>
-                    <td className="px-4 py-3 text-slate-600">
-                      {booking.startTime} - {booking.endTime}
+                    <td className="px-4 py-4 text-slate-700">{booking.faculty}</td>
+                    <td className="px-4 py-4">
+                      <div className="font-semibold text-slate-800">{booking.resourceName}</div>
+                      <div className="text-xs text-slate-500">{booking.resourceId}</div>
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-4">
+                      <div className="font-semibold text-slate-800">{displayDate(booking.date)}</div>
+                      <div className="text-xs text-slate-500">{booking.startTime} - {booking.endTime}</div>
+                    </td>
+                    <td className="px-4 py-4">
                       <StatusBadge status={booking.status} />
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-4">
                       <div className="flex gap-2">
                         <button
                           type="button"
                           disabled={actionDisabled}
                           onClick={() => approve(booking.id)}
-                          className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+                          className="rounded-xl bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           Approve
                         </button>
@@ -163,7 +213,7 @@ export default function AdminBookings() {
                           type="button"
                           disabled={actionDisabled}
                           onClick={() => setRejectModal({ isOpen: true, bookingId: booking.id, reason: '' })}
-                          className="rounded-lg bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-50"
+                          className="rounded-xl bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           Reject
                         </button>
@@ -175,6 +225,15 @@ export default function AdminBookings() {
             </tbody>
           </table>
         )}
+
+        <div className="flex items-center justify-between border-t border-slate-200 px-4 py-3 text-xs text-slate-500">
+          <span>Showing 1-{Math.min(10, totalBookings)} of {totalBookings.toLocaleString()} bookings</span>
+          <div className="flex items-center gap-2">
+            <button type="button" className="rounded-md border border-slate-200 px-2 py-1">1</button>
+            <button type="button" className="rounded-md border border-slate-200 px-2 py-1">2</button>
+            <button type="button" className="rounded-md border border-slate-200 px-2 py-1">3</button>
+          </div>
+        </div>
       </div>
 
       {rejectModal.isOpen && (
