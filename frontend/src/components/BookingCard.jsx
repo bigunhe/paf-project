@@ -5,8 +5,9 @@ function displayDate(isoDate) {
   return new Date(`${isoDate}T00:00:00`).toLocaleDateString()
 }
 
-export default function BookingCard({ booking, onCancel, cancelling }) {
-  const canCancel = booking.status === 'APPROVED'
+export default function BookingCard({ booking, onEdit, editing, onCancel, cancelling }) {
+  const canEdit = booking.status === 'PENDING'
+  const canCancel = booking.status === 'PENDING' || booking.status === 'APPROVED'
 
   return (
     <article className="rounded-2xl border border-white/50 bg-white/60 p-5 shadow-[0_10px_30px_-16px_rgba(15,23,42,0.45)] backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_16px_38px_-18px_rgba(15,23,42,0.5)]">
@@ -44,14 +45,22 @@ export default function BookingCard({ booking, onCancel, cancelling }) {
         </div>
       )}
 
-      <div className="mt-5 flex justify-end">
+      <div className="mt-5 flex justify-end gap-2">
+        <button
+          type="button"
+          disabled={!canEdit || editing}
+          onClick={() => onEdit(booking)}
+          className="rounded-xl border border-slate-300/80 bg-white/70 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-cyan-300 hover:bg-cyan-50 hover:text-cyan-700 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {editing ? 'Opening...' : 'Edit request'}
+        </button>
         <button
           type="button"
           disabled={!canCancel || cancelling}
           onClick={() => onCancel(booking)}
           className="rounded-xl border border-slate-300/80 bg-white/70 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {cancelling ? 'Cancelling...' : 'Cancel booking'}
+          {cancelling ? 'Cancelling...' : 'Cancel request'}
         </button>
       </div>
     </article>

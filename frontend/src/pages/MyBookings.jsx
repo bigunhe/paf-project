@@ -11,8 +11,10 @@ export default function MyBookings() {
   const [resources, setResources] = useState([])
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
+  const [editingId, setEditingId] = useState('')
   const [cancellingId, setCancellingId] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [editingBooking, setEditingBooking] = useState(null)
 
   const loadData = async () => {
     setLoading(true)
@@ -39,15 +41,31 @@ export default function MyBookings() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUserId])
 
-  const handleCreateBooking = async (payload) => {
+  const handleUpsertBooking = async (payload) => {
     setSubmitting(true)
     try {
-      await api.post('/bookings', {
-        ...payload,
-        userId: currentUserId,
-      })
-      toast.success('Booking request submitted')
+      if (editingBooking) {
+        await api.put(
+          `/bookings/${editingBooking.id}`,
+          {
+            ...payload,
+            userId: currentUserId,
+          },
+          {
+            params: { userId: currentUserId },
+          },
+        )
+        toast.success('Booking request updated')
+      } else {
+        await api.post('/bookings', {
+          ...payload,
+          userId: currentUserId,
+        })
+        toast.success('Booking request submitted')
+      }
+
       setIsModalOpen(false)
+      setEditingBooking(null)
       await loadData()
     } catch (error) {
       if (!error.response) {
@@ -65,12 +83,22 @@ export default function MyBookings() {
     }
   }
 
+  const handleOpenEditBooking = (booking) => {
+    if (booking.status !== 'PENDING') {
+      return
+    }
+    setEditingId(booking.id)
+    setEditingBooking(booking)
+    setIsModalOpen(true)
+    setTimeout(() => setEditingId(''), 250)
+  }
+
   const handleCancelBooking = async (booking) => {
-    if (booking.status !== 'APPROVED') {
+    if (booking.status !== 'PENDING' && booking.status !== 'APPROVED') {
       return
     }
 
-    const confirmed = window.confirm('Cancel this approved booking?')
+    const confirmed = window.confirm('Cancel this booking request?')
     if (!confirmed) {
       return
     }
@@ -124,6 +152,8 @@ export default function MyBookings() {
             <BookingCard
               key={booking.id}
               booking={booking}
+              editing={editingId === booking.id}
+              onEdit={handleOpenEditBooking}
               cancelling={cancellingId === booking.id}
               onCancel={handleCancelBooking}
             />
@@ -135,8 +165,13 @@ export default function MyBookings() {
         isOpen={isModalOpen}
         resources={resources}
         submitting={submitting}
-        onClose={() => setIsModalOpen(false)}
-        onSubmit={handleCreateBooking}
+        mode={editingBooking ? 'edit' : 'create'}
+        initialValues={editingBooking}
+        onClose={() => {
+          setIsModalOpen(false)
+          setEditingBooking(null)
+        }}
+        onSubmit={handleUpsertBooking}
       />
     </section>
   )

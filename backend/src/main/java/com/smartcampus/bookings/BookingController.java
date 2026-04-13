@@ -35,6 +35,15 @@ public class BookingController {
 		return bookingService.createBooking(request);
 	}
 
+	@PutMapping("/{id}")
+	public BookingResponseDTO updateBooking(
+			@PathVariable String id,
+			@RequestParam String userId,
+			@Valid @RequestBody BookingRequestDTO request
+	) {
+		return bookingService.updateBooking(id, userId, request);
+	}
+
 	@GetMapping("/my")
 	public List<BookingResponseDTO> getMyBookings(@RequestParam String userId) {
 		return bookingService.getMyBookings(userId);

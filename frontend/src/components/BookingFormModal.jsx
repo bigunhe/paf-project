@@ -11,7 +11,15 @@ const TEMP_RESOURCE_OPTIONS = [
   { id: 'TMP_EQUIPMENT', name: 'Equipment (Projectors, Cameras, etc.)', type: 'EQUIPMENT' },
 ]
 
-export default function BookingFormModal({ isOpen, resources, submitting, onClose, onSubmit }) {
+export default function BookingFormModal({
+  isOpen,
+  resources,
+  submitting,
+  mode = 'create',
+  initialValues = null,
+  onClose,
+  onSubmit,
+}) {
   const [form, setForm] = useState({
     studentId: '',
     studentName: '',
@@ -29,11 +37,33 @@ export default function BookingFormModal({ isOpen, resources, submitting, onClos
     if (!isOpen) return
     setLocalError('')
     const options = resources.length > 0 ? resources : TEMP_RESOURCE_OPTIONS
-    setForm((prev) => ({
-      ...prev,
-      resourceId: prev.resourceId || options[0]?.id || '',
-    }))
-  }, [isOpen, resources])
+    if (initialValues) {
+      setForm({
+        studentId: initialValues.studentId || '',
+        studentName: initialValues.studentName || '',
+        faculty: initialValues.faculty || '',
+        resourceId: initialValues.resourceId || options[0]?.id || '',
+        date: initialValues.date || getToday(),
+        startTime: initialValues.startTime || '',
+        endTime: initialValues.endTime || '',
+        purpose: initialValues.purpose || '',
+        attendeesCount: initialValues.attendeesCount || 1,
+      })
+      return
+    }
+
+    setForm({
+      studentId: '',
+      studentName: '',
+      faculty: '',
+      resourceId: options[0]?.id || '',
+      date: getToday(),
+      startTime: '',
+      endTime: '',
+      purpose: '',
+      attendeesCount: 1,
+    })
+  }, [isOpen, resources, initialValues])
 
   const resourceOptions = resources.length > 0 ? resources : TEMP_RESOURCE_OPTIONS
 
@@ -84,7 +114,9 @@ export default function BookingFormModal({ isOpen, resources, submitting, onClos
         <div className="mb-6 flex items-start justify-between gap-3">
           <div>
             <h2 className="text-2xl font-semibold text-slate-900">Request Booking</h2>
-            <p className="text-sm text-slate-600">Fill in your slot request details.</p>
+            <p className="text-sm text-slate-600">
+              {mode === 'edit' ? 'Update your pending request details.' : 'Fill in your slot request details.'}
+            </p>
           </div>
           <button
             type="button"
@@ -236,7 +268,7 @@ export default function BookingFormModal({ isOpen, resources, submitting, onClos
             disabled={submitting}
             className="rounded-xl bg-cyan-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-cyan-700 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {submitting ? 'Submitting...' : 'Submit request'}
+            {submitting ? 'Submitting...' : mode === 'edit' ? 'Update request' : 'Submit request'}
           </button>
         </div>
       </form>

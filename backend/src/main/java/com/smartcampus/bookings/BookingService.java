@@ -75,6 +75,44 @@ public class BookingService {
 		return toResponse(saved);
 	}
 
+	public BookingResponseDTO updateBooking(String bookingId, String userId, BookingRequestDTO req) {
+		Booking booking = getBookingOrThrow(bookingId);
+		if (!booking.getUserId().equals(userId)) {
+			throw new IllegalArgumentException("Only the booking owner can edit this booking");
+		}
+		if (booking.getStatus() != BookingStatus.PENDING) {
+			throw new ConflictException("Only PENDING bookings can be edited");
+		}
+
+		validateTimeRange(req.startTime(), req.endTime());
+		validateDate(req.date());
+
+		try {
+			Resource resource = resourceService.getEntityById(req.resourceId());
+			if (resource.getStatus() != ResourceStatus.ACTIVE) {
+				throw new ConflictException("Selected resource is not active");
+			}
+		} catch (ResourceNotFoundException ignored) {
+			// Temporary fallback: allow static category options when resources are not seeded yet.
+		}
+
+		assertNoConflict(req.resourceId(), req.date(), req.startTime(), req.endTime(), bookingId);
+
+		booking.setStudentId(req.studentId());
+		booking.setStudentName(req.studentName());
+		booking.setFaculty(req.faculty());
+		booking.setResourceId(req.resourceId());
+		booking.setResourceName(req.resourceName());
+		booking.setDate(req.date());
+		booking.setStartTime(req.startTime());
+		booking.setEndTime(req.endTime());
+		booking.setPurpose(req.purpose());
+		booking.setAttendeesCount(req.attendeesCount());
+
+		Booking saved = bookingRepository.save(booking);
+		return toResponse(saved);
+	}
+
 	public List<BookingResponseDTO> getMyBookings(String userId) {
 		if (userId == null || userId.isBlank()) {
 			throw new IllegalArgumentException("userId is required");
@@ -153,8 +191,8 @@ public class BookingService {
 		if (!booking.getUserId().equals(userId)) {
 			throw new IllegalArgumentException("Only the booking owner can cancel this booking");
 		}
-		if (booking.getStatus() != BookingStatus.APPROVED) {
-			throw new ConflictException("Only APPROVED bookings can be cancelled");
+		if (booking.getStatus() != BookingStatus.PENDING && booking.getStatus() != BookingStatus.APPROVED) {
+			throw new ConflictException("Only PENDING or APPROVED bookings can be cancelled");
 		}
 
 		booking.setStatus(BookingStatus.CANCELLED);
