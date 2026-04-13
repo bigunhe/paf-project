@@ -1,5 +1,8 @@
 package com.smartcampus.bookings.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -17,13 +20,21 @@ public class Booking {
 
 	@Id
 	private String id;
-	private String resourceId;
 	private String userId;
-	private LocalDateTime startTime;
-	private LocalDateTime endTime;
+	private String studentId;
+	private String studentName;
+	private String faculty;
+	private String resourceId;
+	private String resourceName;
+	@JsonFormat(pattern = "yyyy-MM-dd")
+	private LocalDate date;
+	@JsonFormat(pattern = "HH:mm")
+	private LocalTime startTime;
+	@JsonFormat(pattern = "HH:mm")
+	private LocalTime endTime;
 	private String purpose;
-	private int expectedAttendees;
+	private int attendeesCount;
 	private BookingStatus status;
-	private String adminReason;
+	private String rejectionReason;
 	private LocalDateTime createdAt;
 }
