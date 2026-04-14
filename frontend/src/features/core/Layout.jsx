@@ -12,7 +12,7 @@ export default function Layout() {
   const homeLink = isStaffPortal ? '/admin' : '/app'
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
+    <div className="min-h-screen bg-gradient-to-br from-blue-100 via-sky-50 to-blue-200 text-slate-900">
       <header className="bg-white border-b border-slate-200 shadow-sm">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-4 flex-wrap">
           <Link to={homeLink} className="text-lg font-semibold text-slate-900">
