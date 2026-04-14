@@ -4,16 +4,11 @@ function getToday() {
   return new Date().toISOString().slice(0, 10)
 }
 
-const TEMP_RESOURCE_OPTIONS = [
-  { id: 'TMP_LECTURE_HALLS', name: 'Lecture Halls', type: 'SPACE' },
-  { id: 'TMP_LABS', name: 'Labs', type: 'SPACE' },
-  { id: 'TMP_MEETING_ROOMS', name: 'Meeting Rooms', type: 'SPACE' },
-  { id: 'TMP_EQUIPMENT', name: 'Equipment (Projectors, Cameras, etc.)', type: 'EQUIPMENT' },
-]
-
 export default function BookingFormModal({
   isOpen,
   resources,
+  resourcesLoading = false,
+  resourcesError = '',
   submitting,
   mode = 'create',
   initialValues = null,
@@ -36,13 +31,13 @@ export default function BookingFormModal({
   useEffect(() => {
     if (!isOpen) return
     setLocalError('')
-    const options = resources.length > 0 ? resources : TEMP_RESOURCE_OPTIONS
+
     if (initialValues) {
       setForm({
         studentId: initialValues.studentId || '',
         studentName: initialValues.studentName || '',
         faculty: initialValues.faculty || '',
-        resourceId: initialValues.resourceId || options[0]?.id || '',
+        resourceId: initialValues.resourceId || '',
         date: initialValues.date || getToday(),
         startTime: initialValues.startTime || '',
         endTime: initialValues.endTime || '',
@@ -56,20 +51,27 @@ export default function BookingFormModal({
       studentId: '',
       studentName: '',
       faculty: '',
-      resourceId: options[0]?.id || '',
+      resourceId: '',
       date: getToday(),
       startTime: '',
       endTime: '',
       purpose: '',
       attendeesCount: 1,
     })
-  }, [isOpen, resources, initialValues])
+  }, [isOpen, initialValues])
 
-  const resourceOptions = resources.length > 0 ? resources : TEMP_RESOURCE_OPTIONS
+  useEffect(() => {
+    if (!isOpen || resources.length === 0) return
+
+    const exists = resources.some((resource) => resource.id === form.resourceId)
+    if (!form.resourceId || !exists) {
+      setForm((prev) => ({ ...prev, resourceId: resources[0].id }))
+    }
+  }, [isOpen, resources, form.resourceId])
 
   const selectedResource = useMemo(
-    () => resourceOptions.find((resource) => resource.id === form.resourceId),
-    [resourceOptions, form.resourceId],
+    () => resources.find((resource) => resource.id === form.resourceId),
+    [resources, form.resourceId],
   )
 
   if (!isOpen) {
@@ -184,14 +186,21 @@ export default function BookingFormModal({
                 <select
                   value={form.resourceId}
                   onChange={(event) => setForm((prev) => ({ ...prev, resourceId: event.target.value }))}
+                  disabled={resourcesLoading || Boolean(resourcesError) || resources.length === 0}
                   className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 focus:border-cyan-500 focus:outline-none"
                 >
-                  {resourceOptions.map((resource) => (
+                  {resourcesLoading && <option value="">Loading resources...</option>}
+                  {!resourcesLoading && resourcesError && <option value="">Failed to load resources</option>}
+                  {!resourcesLoading && !resourcesError && resources.length === 0 && <option value="">No resources available</option>}
+                  {!resourcesLoading && !resourcesError && resources.map((resource) => (
                     <option key={resource.id} value={resource.id}>
-                      {resource.name} ({resource.type})
+                      {resource.name}
                     </option>
                   ))}
                 </select>
+                {!resourcesLoading && resourcesError && (
+                  <span className="text-[11px] normal-case text-rose-600">{resourcesError}</span>
+                )}
               </label>
 
               <label className="grid gap-1 text-xs font-semibold uppercase tracking-wide text-slate-500">

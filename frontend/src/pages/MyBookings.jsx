@@ -32,6 +32,8 @@ export default function MyBookings() {
   const { currentUserId } = useAuth()
   const [bookings, setBookings] = useState([])
   const [resources, setResources] = useState([])
+  const [resourcesLoading, setResourcesLoading] = useState(false)
+  const [resourcesError, setResourcesError] = useState('')
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [editingId, setEditingId] = useState('')
@@ -52,13 +54,34 @@ export default function MyBookings() {
 
   const loadData = async () => {
     setLoading(true)
+    setResourcesLoading(true)
+    setResourcesError('')
     try {
-      const [{ data: bookingData }, { data: resourceData }] = await Promise.all([
+      const [bookingResult, resourceResult] = await Promise.allSettled([
         api.get('/bookings/my', { params: { userId: currentUserId } }),
         api.get('/resources'),
       ])
-      setBookings(bookingData.filter((booking) => booking.status !== 'CANCELLED'))
-      setResources(resourceData)
+
+      if (bookingResult.status === 'fulfilled') {
+        setBookings(bookingResult.value.data.filter((booking) => booking.status !== 'CANCELLED'))
+      } else {
+        const error = bookingResult.reason
+        if (!error.response) {
+          toast.error('Backend is unavailable. Start backend and verify MongoDB connection settings.')
+        } else {
+          toast.error(error.response?.data?.message || 'Failed to load bookings')
+        }
+      }
+
+      if (resourceResult.status === 'fulfilled') {
+        setResources(resourceResult.value.data)
+      } else {
+        const error = resourceResult.reason
+        const msg = error.response?.data?.message || 'Failed to load resources'
+        setResources([])
+        setResourcesError(msg)
+        toast.error(msg)
+      }
     } catch (error) {
       if (!error.response) {
         toast.error('Backend is unavailable. Start backend and verify MongoDB connection settings.')
@@ -67,6 +90,7 @@ export default function MyBookings() {
       }
     } finally {
       setLoading(false)
+      setResourcesLoading(false)
     }
   }
 
@@ -448,6 +472,8 @@ export default function MyBookings() {
       <BookingFormModal
         isOpen={isModalOpen}
         resources={resources}
+        resourcesLoading={resourcesLoading}
+        resourcesError={resourcesError}
         submitting={submitting}
         mode={editingBooking ? 'edit' : 'create'}
         initialValues={editingBooking}

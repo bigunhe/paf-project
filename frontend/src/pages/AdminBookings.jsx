@@ -15,7 +15,7 @@ export default function AdminBookings() {
   const [loading, setLoading] = useState(true)
   const [actionId, setActionId] = useState('')
   const [filters, setFilters] = useState({ status: '', date: '' })
-  const [rejectModal, setRejectModal] = useState({ isOpen: false, bookingId: '', reason: '' })
+  const [rejectModal, setRejectModal] = useState({ isOpen: false, bookingId: '', reason: '', booking: null })
 
   const loadBookings = async () => {
     setLoading(true)
@@ -63,7 +63,7 @@ export default function AdminBookings() {
         reason: rejectModal.reason.trim(),
       })
       toast.success('Booking rejected')
-      setRejectModal({ isOpen: false, bookingId: '', reason: '' })
+      setRejectModal({ isOpen: false, bookingId: '', reason: '', booking: null })
       await loadBookings()
     } catch (error) {
       toast.error(error.response?.data?.message || 'Rejection failed')
@@ -209,7 +209,7 @@ export default function AdminBookings() {
                         <button
                           type="button"
                           disabled={actionDisabled}
-                          onClick={() => setRejectModal({ isOpen: true, bookingId: booking.id, reason: '' })}
+                          onClick={() => setRejectModal({ isOpen: true, bookingId: booking.id, reason: '', booking })}
                           className="rounded-xl bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           Reject
@@ -235,36 +235,44 @@ export default function AdminBookings() {
 
       {rejectModal.isOpen && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-slate-900/50 px-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-2xl border border-white/60 bg-white/80 p-5 shadow-xl">
-            <h2 className="text-lg font-semibold text-slate-900">Reject booking</h2>
-            <p className="mt-1 text-sm text-slate-600">Add a reason visible to the user.</p>
-            <textarea
-              rows={4}
-              maxLength={300}
-              value={rejectModal.reason}
-              onChange={(event) =>
-                setRejectModal((prev) => ({
-                  ...prev,
-                  reason: event.target.value,
-                }))
-              }
-              className="mt-3 w-full rounded-xl border border-slate-300/80 bg-white px-3 py-2 text-sm"
-            />
-            <div className="mt-4 flex justify-end gap-2">
+          <div className="w-full max-w-md rounded-2xl border border-white/60 bg-white p-6 shadow-xl">
+            <h2 className="text-lg font-semibold text-slate-900">Reject Request</h2>
+            {rejectModal.booking && (
+              <p className="mt-2 text-sm text-slate-600">
+                You are rejecting the booking for <span className="font-semibold text-slate-900">{rejectModal.booking.resourceName}</span> by <span className="font-semibold text-slate-900">{rejectModal.booking.studentName || rejectModal.booking.userId}</span>.
+              </p>
+            )}
+            <div className="mt-4 rounded-xl bg-slate-50 p-3">
+              <label className="text-xs font-semibold uppercase tracking-widest text-slate-500">Reason for Rejection</label>
+              <textarea
+                rows={4}
+                maxLength={300}
+                placeholder="Please specify why this request is being denied (e.g., Conflict with maintenance, missing paperwork)..."
+                value={rejectModal.reason}
+                onChange={(event) =>
+                  setRejectModal((prev) => ({
+                    ...prev,
+                    reason: event.target.value,
+                  }))
+                }
+                className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400"
+              />
+            </div>
+            <div className="mt-4 flex justify-end gap-3">
               <button
                 type="button"
-                onClick={() => setRejectModal({ isOpen: false, bookingId: '', reason: '' })}
-                className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-700"
+                onClick={() => setRejectModal({ isOpen: false, bookingId: '', reason: '', booking: null })}
+                className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
               >
-                Close
+                Cancel
               </button>
               <button
                 type="button"
                 disabled={actionId === rejectModal.bookingId}
                 onClick={reject}
-                className="rounded-lg bg-rose-600 px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-60"
+                className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-700 disabled:opacity-60"
               >
-                {actionId === rejectModal.bookingId ? 'Rejecting...' : 'Confirm reject'}
+                {actionId === rejectModal.bookingId ? 'Rejecting...' : 'Confirm Rejection'}
               </button>
             </div>
           </div>
