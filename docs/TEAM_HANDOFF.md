@@ -23,13 +23,13 @@ Daily: pull latest `main`, merge into your feature branch, push your branch, ope
 2. **Backend:** `cd backend && ./mvnw spring-boot:run -Dspring-boot.run.profiles=local`
 3. **Frontend:** `cd frontend && npm install && npm run dev`
 
-**Full run guide + how domains plug together:** [05-RUNNING_AND_TEAM_INTEGRATION.md](05-RUNNING_AND_TEAM_INTEGRATION.md)
+**Full run guide + how domains plug together:** [05-RUNNING_AND_TEAM_INTEGRATION.md](05-RUNNING_AND_TEAM_INTEGRATION.md). **Windows (PowerShell):** [07-WINDOWS_LOCAL_SETUP.md](07-WINDOWS_LOCAL_SETUP.md).
 
-**Docs:** API and packaging rules in [03-BACKEND_API_RULES.md](03-BACKEND_API_RULES.md), UI and routes in [02-FRONTEND_UI_RULES.md](02-FRONTEND_UI_RULES.md), data shapes in [01-BUSINESS_AND_DATA_MODEL.md](01-BUSINESS_AND_DATA_MODEL.md), Git workflow in [04-GIT_AND_WORKFLOW.md](04-GIT_AND_WORKFLOW.md).
+**Docs:** API and packaging rules in [03-BACKEND_API_RULES.md](03-BACKEND_API_RULES.md), UI and routes in [02-FRONTEND_UI_RULES.md](02-FRONTEND_UI_RULES.md), data shapes in [01-BUSINESS_AND_DATA_MODEL.md](01-BUSINESS_AND_DATA_MODEL.md), Git workflow in [04-GIT_AND_WORKFLOW.md](04-GIT_AND_WORKFLOW.md), team ownership map in [06-TEAM_OWNERSHIP_AND_STATUS.md](06-TEAM_OWNERSHIP_AND_STATUS.md). **Member 4 phased roadmap (auth, home, OAuth):** [08-MEMBER4_AUTH_UX_ROADMAP.md](08-MEMBER4_AUTH_UX_ROADMAP.md).
 
 **API base URL:** `http://localhost:8080/api/v1` — central router in `frontend/src/features/core/App.jsx`.
 
-**MVP note:** OAuth Google is stubbed on the login screen; use the **Admin view (dev)** toggle in the header and seeded users until auth is finished.
+**MVP note:** OAuth Google is stubbed on the login screen; use the **Staff portal** checkbox in the header (switches to `/admin`) and seeded users until auth is finished.
 
 ---
 
