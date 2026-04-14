@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'react-hot-toast'
 import BookingCard from '../components/BookingCard'
 import BookingFormModal from '../components/BookingFormModal'
@@ -28,6 +28,35 @@ function formatPrettyDate(dateStr) {
   return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
+function formatHourLabel(hour) {
+  const normalizedHour = ((hour % 24) + 24) % 24
+  const period = normalizedHour >= 12 ? 'PM' : 'AM'
+  const displayHour = normalizedHour % 12 || 12
+  return `${displayHour} ${period}`
+}
+
+function getApprovalHours(bookings) {
+  const approvedItems = bookings.filter(
+    (booking) => booking.status === 'APPROVED' && booking.createdAt && booking.approvedAt,
+  )
+
+  if (approvedItems.length === 0) {
+    return 0
+  }
+
+  const totalHours = approvedItems.reduce((total, booking) => {
+    const createdAt = new Date(booking.createdAt).getTime()
+    const approvedAt = new Date(booking.approvedAt).getTime()
+    if (Number.isNaN(createdAt) || Number.isNaN(approvedAt) || approvedAt < createdAt) {
+      return total
+    }
+
+    return total + (approvedAt - createdAt) / (1000 * 60 * 60)
+  }, 0)
+
+  return totalHours / approvedItems.length
+}
+
 export default function MyBookings() {
   const { currentUserId } = useAuth()
   const [bookings, setBookings] = useState([])
@@ -45,7 +74,37 @@ export default function MyBookings() {
   const totalBookings = bookings.length
   const activeRequests = bookings.filter((booking) => booking.status === 'APPROVED' || booking.status === 'PENDING').length
   const pendingAction = bookings.filter((booking) => booking.status === 'PENDING').length
+  const rejectedRequests = bookings.filter((booking) => booking.status === 'REJECTED').length
   const reservedHours = getReservedHours(bookings)
+  const bookingInsights = useMemo(() => {
+    const hourCounts = new Map()
+
+    bookings.forEach((booking) => {
+      const [startHour] = booking.startTime.split(':').map(Number)
+      if (Number.isNaN(startHour)) {
+        return
+      }
+
+      hourCounts.set(startHour, (hourCounts.get(startHour) || 0) + 1)
+    })
+
+    let peakHour = null
+    let peakCount = 0
+
+    hourCounts.forEach((count, hour) => {
+      if (count > peakCount || (count === peakCount && (peakHour === null || hour < peakHour))) {
+        peakHour = hour
+        peakCount = count
+      }
+    })
+
+    return {
+      peakHour,
+      peakCount,
+      peakRange: peakHour === null ? 'No data yet' : `${formatHourLabel(peakHour)} – ${formatHourLabel(peakHour + 2)}`,
+      avgApprovalHours: getApprovalHours(bookings),
+    }
+  }, [bookings])
   const nextUpBookings = bookings
     .filter((booking) => booking.status === 'APPROVED')
     .filter((booking) => toBookingStartDate(booking).getTime() >= Date.now())
@@ -200,184 +259,199 @@ export default function MyBookings() {
   }
 
   return (
-    <section className="relative overflow-hidden rounded-[2rem] border border-slate-200 bg-[linear-gradient(180deg,#f8fbff_0%,#f8fafc_100%)] text-slate-900 shadow-[0_24px_60px_-38px_rgba(15,23,42,0.45)]">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(79,70,229,0.12),transparent_28%),radial-gradient(circle_at_bottom_left,rgba(59,130,246,0.1),transparent_26%)]" />
+    <section className="relative overflow-hidden rounded-[2rem] border border-slate-200 bg-[linear-gradient(180deg,#f7fafc_0%,#eef2ff_100%)] text-slate-900 shadow-[0_30px_70px_-42px_rgba(15,23,42,0.45)]">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(14,116,144,0.15),transparent_35%),radial-gradient(circle_at_bottom_right,rgba(30,64,175,0.14),transparent_30%)]" />
 
-      <div className="relative space-y-6 p-5 md:p-6 lg:p-7">
-        <header className="space-y-4">
-          <div className="space-y-2 px-1">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-emerald-800/45">Institutional Overview</p>
-            <h1 className="max-w-3xl text-4xl font-semibold leading-tight tracking-tight text-emerald-950 md:text-5xl">
-              Welcome back. Find Your Resource Allocation & Curated Scheduling here.
-            </h1>
+      <div className="relative space-y-6 p-5 md:p-7">
+        <header className="rounded-3xl border border-slate-200/80 bg-[linear-gradient(120deg,#0f172a_0%,#1e293b_58%,#0f172a_100%)] p-6 text-white shadow-[0_24px_48px_-34px_rgba(15,23,42,0.9)] md:p-8">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-cyan-200/90">Bookings Workspace</p>
+              <h1 className="mt-2 max-w-3xl text-3xl font-semibold leading-tight tracking-tight md:text-5xl">
+                Command center for your resource schedule
+              </h1>
+              <p className="mt-3 max-w-2xl text-sm text-slate-300">
+                Track approvals, monitor your timeline, and launch new requests from one focused interface.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setIsModalOpen(true)}
+              className="rounded-xl bg-cyan-400 px-4 py-2.5 text-sm font-semibold text-slate-900 shadow-[0_12px_24px_-16px_rgba(34,211,238,0.8)] transition hover:-translate-y-0.5 hover:bg-cyan-300"
+            >
+              + New Request
+            </button>
           </div>
 
-          <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_20px_44px_-30px_rgba(15,23,42,0.3)]">
-            <div className="grid lg:grid-cols-[1.25fr_0.75fr]">
-              <div className="p-6 md:p-8">
-                <p className="text-xs font-semibold text-slate-400">Session Status: Active</p>
-                <h2 className="mt-4 max-w-xl text-4xl font-semibold leading-tight tracking-tight text-emerald-950">
-                  Resource Booking Hub
-                </h2>
-                <p className="mt-4 max-w-xl text-sm leading-7 text-slate-600">
-                  Manage the balance between laboratory availability and research requirements with a clean, focused workspace.
-                </p>
-
-                <div className="mt-8 grid gap-3 border-t border-slate-200 pt-5 sm:grid-cols-3">
-                  <div>
-                    <p className="text-3xl font-semibold text-emerald-950">{String(totalBookings).padStart(2, '0')}</p>
-                    <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">Total Bookings</p>
-                  </div>
-                  <div>
-                    <p className="text-3xl font-semibold text-emerald-950">{String(pendingAction).padStart(2, '0')}</p>
-                    <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">Pending Approval</p>
-                  </div>
-                  <div>
-                    <p className="text-3xl font-semibold text-emerald-950">{reservedHours}h</p>
-                    <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">Allocated Hours</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="relative min-h-[280px] border-t border-slate-200 bg-[linear-gradient(180deg,#0f1f4a_0%,#0b1433_100%)] p-6 md:p-8 lg:border-l lg:border-t-0">
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.12),transparent_32%)]" />
-
-                <div className="relative mx-auto mt-6 max-w-sm rounded-2xl bg-white/95 p-6 text-center shadow-[0_24px_44px_-30px_rgba(0,0,0,0.45)]">
-                  <p className="text-sm font-semibold uppercase tracking-[0.12em] text-blue-900/55">Quick Action</p>
-                  <h3 className="mt-3 text-2xl font-semibold text-blue-950">Start New Session</h3>
-                  <p className="mt-3 text-sm leading-6 text-slate-600">
-                    Initiate a new resource request for your upcoming academic schedule.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => setIsModalOpen(true)}
-                    className="mt-5 w-full rounded-xl bg-blue-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-800"
-                  >
-                    + New Request
-                  </button>
-                </div>
-              </div>
-            </div>
+          <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <MetricPanel label="Total Bookings" value={String(totalBookings).padStart(2, '0')} />
+            <MetricPanel label="Pending" value={String(pendingAction).padStart(2, '0')} />
+            <MetricPanel label="Active Requests" value={String(activeRequests).padStart(2, '0')} />
+            <MetricPanel label="Allocated Hours" value={`${reservedHours}h`} />
           </div>
         </header>
 
-        <section className="rounded-[1.75rem] border border-slate-200 bg-white/90 p-5 shadow-[0_18px_40px_-30px_rgba(15,23,42,0.35)] backdrop-blur">
-          <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-500">Approved & upcoming</p>
-              <h2 className="mt-1 text-2xl font-black tracking-tight text-slate-950">Next Up Bookings</h2>
+        <section className="grid gap-5 xl:grid-cols-[1.2fr_0.8fr]">
+          <article className="rounded-3xl border border-slate-200 bg-white/90 p-5 shadow-[0_16px_40px_-30px_rgba(15,23,42,0.5)] backdrop-blur md:p-6">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-500">Approved timeline</p>
+                <h2 className="mt-1 text-2xl font-semibold tracking-tight text-slate-950">Next Up</h2>
+              </div>
+              <span className="rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-cyan-700">
+                Live
+              </span>
             </div>
-            <span className="rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-blue-700">
-              Upcoming
-            </span>
-          </div>
 
-          {nextUpBookings.length === 0 ? (
-            <div className="rounded-[1.5rem] border border-dashed border-slate-300 bg-slate-50/80 px-6 py-10 text-sm text-slate-500">
-              No upcoming approved bookings right now.
-            </div>
-          ) : (
-            <div className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
-              <article className="relative overflow-hidden rounded-[1.75rem] border border-slate-200 bg-slate-950 text-white shadow-[0_20px_42px_-30px_rgba(15,23,42,0.75)]">
-                <div
-                  className="absolute inset-0 bg-cover bg-center opacity-35"
-                  style={{
-                    backgroundImage: "linear-gradient(135deg, rgba(15,23,42,0.15), rgba(30,64,175,0.7)), url('/study1.jpg')",
-                  }}
-                />
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(96,165,250,0.2),transparent_30%),linear-gradient(180deg,rgba(15,23,42,0.18),rgba(15,23,42,0.78))]" />
-                <div className="relative flex min-h-[320px] flex-col justify-between p-6">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="space-y-3">
-                      <div className="inline-flex rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/80 backdrop-blur">
-                        Featured booking
-                      </div>
-                      <div>
-                        <h3 className="max-w-md text-3xl font-black tracking-tight text-white">{nextUpBookings[0].resourceName}</h3>
-                        <p className="mt-2 text-sm text-slate-300">{nextUpBookings[0].faculty || nextUpBookings[0].resourceId}</p>
-                      </div>
-                    </div>
-                    <StatusBadge status="APPROVED" />
-                  </div>
-
-                  <div className="grid gap-3 sm:grid-cols-3">
-                    <MiniMetric label="Date" value={formatPrettyDate(nextUpBookings[0].date)} />
-                    <MiniMetric label="Time" value={`${nextUpBookings[0].startTime} - ${nextUpBookings[0].endTime}`} />
-                    <MiniMetric label="Capacity" value={`${nextUpBookings[0].attendeesCount} people`} />
-                  </div>
-
-                </div>
-              </article>
-
+            {nextUpBookings.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-5 py-10 text-center text-sm text-slate-500">
+                No upcoming approved bookings right now.
+              </div>
+            ) : (
               <div className="space-y-3">
-                {nextUpBookings.slice(1).map((booking, index) => (
+                {nextUpBookings.map((booking, index) => (
                   <article
                     key={`next-${booking.id}`}
-                    className="group overflow-hidden rounded-[1.5rem] border border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] shadow-[0_14px_32px_-24px_rgba(15,23,42,0.45)] transition duration-200 hover:-translate-y-1 hover:shadow-[0_20px_38px_-26px_rgba(15,23,42,0.5)]"
+                    className="rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_10px_22px_-18px_rgba(15,23,42,0.45)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_18px_30px_-20px_rgba(15,23,42,0.5)]"
                   >
-                    <div className="flex items-stretch">
-                      <div className="flex w-16 items-center justify-center bg-gradient-to-b from-blue-600 to-indigo-600 text-lg font-black text-white">
-                        0{index + 2}
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">Slot {index + 1}</p>
+                        <h3 className="mt-1 text-lg font-semibold text-slate-900">{booking.resourceName}</h3>
+                        <p className="text-sm text-slate-500">{booking.faculty || booking.resourceId}</p>
                       </div>
-                      <div className="flex flex-1 flex-col justify-between gap-4 p-4">
-                        <div>
-                          <div className="flex flex-wrap items-center justify-between gap-2">
-                            <div>
-                              <h3 className="text-base font-semibold tracking-tight text-slate-950">{booking.resourceName}</h3>
-                              <p className="text-xs text-slate-500">{booking.faculty || booking.resourceId}</p>
-                            </div>
-                            <StatusBadge status="APPROVED" />
-                          </div>
+                      <StatusBadge status="APPROVED" />
+                    </div>
 
-                          <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
-                            <CompactStat label="Date" value={formatPrettyDate(booking.date)} />
-                            <CompactStat label="Time" value={`${booking.startTime} - ${booking.endTime}`} />
-                            <CompactStat label="People" value={String(booking.attendeesCount)} />
-                          </div>
-                        </div>
+                    <div className="mt-4 grid gap-2 sm:grid-cols-3">
+                      <CompactStat label="Date" value={formatPrettyDate(booking.date)} />
+                      <CompactStat label="Time" value={`${booking.startTime} - ${booking.endTime}`} />
+                      <CompactStat label="People" value={String(booking.attendeesCount)} />
+                    </div>
 
-                        <div className="flex items-center justify-between gap-2">
-                          <p className="text-xs text-slate-500">Up next in your timeline</p>
-                          <button
-                            type="button"
-                            disabled={cancellingId === booking.id}
-                            onClick={() => handleCancelBooking(booking)}
-                            className="rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700 disabled:cursor-not-allowed disabled:opacity-50"
-                          >
-                            {cancellingId === booking.id ? 'Cancelling...' : 'Cancel'}
-                          </button>
-                        </div>
-                      </div>
+                    <div className="mt-4 flex items-center justify-between gap-2">
+                      <p className="text-xs text-slate-500">Timeline item ready</p>
+                      <button
+                        type="button"
+                        disabled={cancellingId === booking.id}
+                        onClick={() => handleCancelBooking(booking)}
+                        className="rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {cancellingId === booking.id ? 'Cancelling...' : 'Cancel'}
+                      </button>
                     </div>
                   </article>
                 ))}
               </div>
+            )}
+          </article>
+
+          <article className="relative overflow-hidden rounded-3xl border border-slate-200 shadow-[0_18px_40px_-28px_rgba(15,23,42,0.6)]">
+            <div
+              className="absolute inset-0 bg-cover bg-center"
+              style={{
+                backgroundImage: "linear-gradient(140deg, rgba(15,23,42,0.82), rgba(14,116,144,0.62)), url('/study2.jpg')",
+              }}
+            />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(125,211,252,0.2),transparent_38%)]" />
+
+            <div className="relative flex min-h-[340px] flex-col justify-between p-6 text-white md:p-7">
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-cyan-100/85">Operations snapshot</p>
+                <h3 className="mt-2 text-2xl font-semibold tracking-tight">Today&apos;s Booking Pulse</h3>
+                <p className="mt-3 max-w-xs text-sm leading-6 text-slate-100/90">
+                  A quick view of queue pressure, rejected requests, and your next approved slot in the timeline.
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="rounded-xl border border-white/20 bg-white/10 px-3 py-2 backdrop-blur">
+                    <p className="text-[10px] uppercase tracking-[0.16em] text-cyan-100/80">Pending</p>
+                    <p className="mt-1 text-lg font-semibold">{pendingAction}</p>
+                  </div>
+                  <div className="rounded-xl border border-white/20 bg-white/10 px-3 py-2 backdrop-blur">
+                    <p className="text-[10px] uppercase tracking-[0.16em] text-cyan-100/80">Rejected</p>
+                    <p className="mt-1 text-lg font-semibold">{rejectedRequests}</p>
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-white/20 bg-white/10 px-3 py-3 backdrop-blur">
+                  <p className="text-[10px] uppercase tracking-[0.16em] text-cyan-100/80">Next approved slot</p>
+                  <p className="mt-1 text-sm font-semibold text-white">
+                    {nextUpBookings[0]
+                      ? `${formatPrettyDate(nextUpBookings[0].date)} • ${nextUpBookings[0].startTime}`
+                      : 'No approved slot scheduled'}
+                  </p>
+                  <p className="mt-1 text-xs text-slate-200/90">
+                    API: {resourcesError ? 'Degraded' : resourcesLoading ? 'Syncing data' : 'Operational'}
+                  </p>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div
+                    className="group rounded-xl border border-white/20 bg-white/10 p-4 backdrop-blur transition duration-300 hover:-translate-y-0.5 hover:bg-white/15 hover:shadow-[0_16px_30px_-22px_rgba(0,0,0,0.45)]"
+                    style={{ animation: 'insightRise 600ms ease-out 90ms both' }}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-cyan-100/80">Peak Hours</p>
+                        <h4 className="mt-1 text-base font-semibold text-white">Most bookings</h4>
+                      </div>
+                      <div className="rounded-full border border-white/20 bg-white/10 p-2 transition duration-300 group-hover:scale-105">
+                        <span className="block h-3 w-3 rounded-full border-2 border-white/80 border-t-transparent" />
+                      </div>
+                    </div>
+                    <p className="mt-3 text-lg font-semibold text-white">
+                      {bookingInsights.peakHour === null ? 'No peak yet' : bookingInsights.peakRange}
+                    </p>
+                    <p className="mt-1 text-xs text-slate-200/90">
+                      {bookingInsights.peakHour === null
+                        ? 'Waiting for enough booking data'
+                        : `${bookingInsights.peakCount} booking${bookingInsights.peakCount === 1 ? '' : 's'} at that window`}
+                    </p>
+                  </div>
+
+                  <div
+                    className="group rounded-xl border border-white/20 bg-white/10 p-4 backdrop-blur transition duration-300 hover:-translate-y-0.5 hover:bg-white/15 hover:shadow-[0_16px_30px_-22px_rgba(0,0,0,0.45)]"
+                    style={{ animation: 'insightRise 600ms ease-out 180ms both' }}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-cyan-100/80">Avg Approval Time</p>
+                        <h4 className="mt-1 text-base font-semibold text-white">Approval speed</h4>
+                      </div>
+                      <div className="rounded-full border border-white/20 bg-white/10 p-2 transition duration-300 group-hover:scale-105">
+                        <span className="block h-3 w-3 rounded-full border-2 border-white/80 border-b-transparent" />
+                      </div>
+                    </div>
+                    <p className="mt-3 text-lg font-semibold text-white">~{bookingInsights.avgApprovalHours.toFixed(1)} hours</p>
+                    <p className="mt-1 text-xs text-slate-200/90">
+                      Based on approved bookings only
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(true)}
+                  className="w-full rounded-xl bg-white px-4 py-3 text-sm font-semibold text-slate-900 transition hover:-translate-y-0.5 hover:bg-cyan-50"
+                >
+                  Open Booking Form
+                </button>
+              </div>
             </div>
-          )}
+          </article>
         </section>
 
-        <section className="rounded-[1.75rem] border border-slate-200 bg-white/90 p-5 shadow-[0_18px_40px_-30px_rgba(15,23,42,0.35)] backdrop-blur">
+        <section className="rounded-3xl border border-slate-200 bg-white/92 p-5 shadow-[0_18px_42px_-32px_rgba(15,23,42,0.45)] backdrop-blur md:p-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h2 className="text-lg font-semibold text-slate-950 md:text-xl">Recent Request History</h2>
-              <p className="text-xs text-slate-500">{bookings.length} total</p>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">History</p>
+              <h2 className="mt-1 text-xl font-semibold tracking-tight text-slate-900">Recent Requests</h2>
             </div>
-
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
-              >
-                Filters
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsModalOpen(true)}
-                className="rounded-xl bg-slate-950 px-4 py-2 text-sm font-semibold text-white shadow-[0_10px_24px_-18px_rgba(15,23,42,0.65)] transition hover:-translate-y-0.5 hover:bg-slate-800"
-              >
-                + New Request
-              </button>
-            </div>
+            <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-500">{bookings.length} records</p>
           </div>
 
           <div className="mt-4 hidden rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500 md:grid md:grid-cols-[2fr_1.3fr_1fr_1.3fr]">
@@ -388,17 +462,17 @@ export default function MyBookings() {
           </div>
 
           {loading ? (
-            <div className="grid place-items-center rounded-[1.5rem] border border-slate-200 py-16">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600" />
+            <div className="grid place-items-center rounded-2xl border border-slate-200 py-16">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-cyan-600" />
             </div>
           ) : bookings.length === 0 ? (
-            <div className="rounded-[1.5rem] border border-dashed border-slate-300 py-14 text-center">
+            <div className="rounded-2xl border border-dashed border-slate-300 py-14 text-center">
               <h2 className="text-lg font-semibold text-slate-800">No bookings yet</h2>
               <p className="mt-2 text-sm text-slate-500">Create your first booking request to get started.</p>
             </div>
           ) : (
             <div className="mt-3 space-y-3">
-              {bookings.map((booking, index) => (
+              {bookings.map((booking) => (
                 <BookingCard
                   key={booking.id}
                   booking={booking}
@@ -412,62 +486,21 @@ export default function MyBookings() {
               ))}
             </div>
           )}
-
-          <div className="mt-3 text-xs text-slate-500">Displaying {bookings.length} of {bookings.length} records</div>
         </section>
-
-        <div className="grid gap-4 lg:grid-cols-[2fr_1fr]">
-          <div className="relative overflow-hidden rounded-[1.75rem] border border-slate-200 shadow-[0_18px_40px_-28px_rgba(15,23,42,0.45)]">
-            <div
-              className="absolute inset-0 bg-cover bg-center"
-              style={{ backgroundImage: "linear-gradient(135deg, rgba(30,64,175,0.78), rgba(37,99,235,0.55)), url('/study1.jpg')" }}
-            />
-            <div className="absolute inset-0 bg-gradient-to-tr from-slate-950/35 via-transparent to-transparent" />
-            <div className="relative p-6 text-white">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-200">New Facility</p>
-              <h3 className="mt-3 text-3xl font-semibold leading-tight tracking-tight">Postgrad Research Clusters</h3>
-              <p className="mt-3 max-w-md text-sm leading-6 text-slate-100/95">
-                High-performance computing resources are now available for prioritized academic bookings.
-              </p>
-              <button
-                type="button"
-                className="mt-6 rounded-2xl bg-white px-4 py-2.5 text-sm font-semibold text-slate-950 shadow-sm transition hover:-translate-y-0.5"
-              >
-                Explore Catalog
-              </button>
-            </div>
-          </div>
-
-          <div className="relative overflow-hidden rounded-[1.75rem] border border-slate-200 shadow-[0_18px_40px_-28px_rgba(15,23,42,0.45)]">
-            <div
-              className="absolute inset-0 bg-cover bg-center"
-              style={{ backgroundImage: "linear-gradient(135deg, rgba(15,23,42,0.78), rgba(30,41,59,0.65)), url('/study2.jpg')" }}
-            />
-            <div className="absolute inset-0 bg-gradient-to-br from-indigo-950/20 via-transparent to-blue-950/25" />
-            <div className="relative p-6 text-white">
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/10 text-lg backdrop-blur">
-                ⚖
-              </div>
-              <h3 className="mt-4 text-2xl font-semibold tracking-tight">Resource Policy</h3>
-              <p className="mt-3 text-sm leading-6 text-slate-100/90">
-                Ensure compliance with the 2024 University Resource Access guidelines.
-              </p>
-              <ul className="mt-4 space-y-2 text-sm text-slate-200">
-                <li>Safety module verified</li>
-                <li>Departmental approval active</li>
-                <li>Booking rules enforced</li>
-              </ul>
-              <button
-                type="button"
-                className="mt-6 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/15"
-              >
-                View Official Guidelines
-              </button>
-            </div>
-          </div>
-        </div>
-
       </div>
+
+      <style>{`
+        @keyframes insightRise {
+          from {
+            opacity: 0;
+            transform: translateY(12px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      `}</style>
 
       <BookingFormModal
         isOpen={isModalOpen}
@@ -487,20 +520,11 @@ export default function MyBookings() {
   )
 }
 
-function InfoChip({ label, value, valueClassName = 'text-slate-800' }) {
+function MetricPanel({ label, value }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white px-3 py-2">
-      <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">{label}</p>
-      <p className={`mt-1 text-sm font-semibold ${valueClassName}`}>{value}</p>
-    </div>
-  )
-}
-
-function MiniMetric({ label, value }) {
-  return (
-    <div className="rounded-[1.25rem] border border-white/10 bg-white/8 p-3 backdrop-blur">
-      <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-300">{label}</p>
-      <p className="mt-2 text-sm font-semibold text-white">{value}</p>
+    <div className="rounded-2xl border border-white/15 bg-white/10 px-4 py-3 backdrop-blur">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-cyan-100/75">{label}</p>
+      <p className="mt-2 text-2xl font-semibold text-white">{value}</p>
     </div>
   )
 }
