@@ -208,10 +208,10 @@ export default function TicketsPage() {
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+        <h1 className="text-3xl font-bold tracking-tight text-white">
           {isAdmin ? 'Incidents & Maintenance' : 'Report a Problem'}
         </h1>
-        <p className="text-slate-500 mt-2">
+        <p className="text-slate-300 mt-2">
           {isAdmin
             ? 'Manage all campus incidents, deploy technicians, and resolve issues.'
             : 'Tell us what needs fixing on campus — our technicians act fast.'}
@@ -240,7 +240,7 @@ export default function TicketsPage() {
                  const matching = resources.filter(r => r.name === newB);
                  if (matching.length > 0) setForm(f => ({ ...f, resourceId: matching[0].id }));
               }}
-              className="border border-slate-200 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none transition-all bg-slate-50"
+              className="border border-slate-200 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none transition-all bg-slate-50 text-slate-900"
             >
               {Array.from(new Set(resources.map(r => r.name))).map((bName) => (
                 <option key={bName} value={bName}>{bName}</option>
@@ -252,7 +252,7 @@ export default function TicketsPage() {
             <select
               value={form.resourceId}
               onChange={(e) => setForm((f) => ({ ...f, resourceId: e.target.value }))}
-              className="border border-slate-200 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none transition-all bg-slate-50"
+              className="border border-slate-200 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none transition-all bg-slate-50 text-slate-900"
             >
               {resources.filter(r => r.name === selectedBuilding).map((r) => (
                 <option key={r.id} value={r.id}>{r.location} ({r.type})</option>
@@ -267,7 +267,7 @@ export default function TicketsPage() {
             required
             value={form.category}
             onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
-            className="border border-slate-200 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none transition-all bg-white"
+            className="border border-slate-200 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none transition-all bg-white text-slate-900"
           >
             <option value="" disabled>Select a category</option>
             {CATEGORIES.map((c) => (
@@ -284,7 +284,7 @@ export default function TicketsPage() {
             placeholder="Please provide details about the incident..."
             value={form.description}
             onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-            className="border border-slate-200 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none transition-all resize-none"
+            className="border border-slate-200 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none transition-all resize-none text-slate-900 placeholder-slate-400"
           />
         </div>
 
@@ -294,7 +294,7 @@ export default function TicketsPage() {
             <select
               value={form.priority}
               onChange={(e) => setForm((f) => ({ ...f, priority: e.target.value }))}
-              className="border border-slate-200 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none"
+              className="border border-slate-200 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none text-slate-900"
             >
               {PRIORITIES.map((p) => (
                 <option key={p} value={p}>{p}</option>
@@ -308,7 +308,7 @@ export default function TicketsPage() {
               placeholder="+123456789"
               value={form.contactDetails}
               onChange={(e) => setForm((f) => ({ ...f, contactDetails: e.target.value }))}
-              className="border border-slate-200 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none"
+              className="border border-slate-200 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none text-slate-900 placeholder-slate-400"
             />
           </div>
         </div>
@@ -405,7 +405,7 @@ export default function TicketsPage() {
                          const matching = resources.filter(r => r.name === e.target.value);
                          if (matching.length > 0) setEditForm(f => ({ ...f, resourceId: matching[0].id }));
                        }} 
-                       className="border border-slate-200 rounded p-1.5 text-xs focus:ring-2 focus:ring-blue-500 outline-none"
+                       className="border border-slate-200 rounded p-1.5 text-xs focus:ring-2 focus:ring-blue-500 outline-none text-slate-900"
                      >
                        {Array.from(new Set(resources.map(r => r.name))).map((bName) => (
                          <option key={bName} value={bName}>{bName}</option>
@@ -417,7 +417,7 @@ export default function TicketsPage() {
                      <select 
                        value={editForm.resourceId} 
                        onChange={e => setEditForm(f => ({ ...f, resourceId: e.target.value }))} 
-                       className="border border-slate-200 rounded p-1.5 text-xs focus:ring-2 focus:ring-blue-500 outline-none"
+                       className="border border-slate-200 rounded p-1.5 text-xs focus:ring-2 focus:ring-blue-500 outline-none text-slate-900"
                      >
                        {resources.filter(r => r.name === (resources.find(x => x.id === editForm.resourceId)?.name)).map((r) => (
                          <option key={r.id} value={r.id}>{r.location}</option>
@@ -428,25 +428,25 @@ export default function TicketsPage() {
                 <div className="grid gap-3">
                   <div className="grid gap-1">
                      <label className="text-xs font-semibold text-slate-600 uppercase">Category</label>
-                     <select required value={editForm.category} onChange={e => setEditForm(f => ({...f, category: e.target.value}))} className="border border-slate-200 rounded p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white">
+                     <select required value={editForm.category} onChange={e => setEditForm(f => ({...f, category: e.target.value}))} className="border border-slate-200 rounded p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white text-slate-900">
                        <option value="" disabled>Select a category</option>
                        {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                      </select>
                   </div>
                   <div className="grid gap-1">
                      <label className="text-xs font-semibold text-slate-600 uppercase">Description</label>
-                     <textarea rows={3} value={editForm.description} onChange={e => setEditForm(f => ({...f, description: e.target.value}))} className="border border-slate-200 rounded p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none resize-none" />
+                     <textarea rows={3} value={editForm.description} onChange={e => setEditForm(f => ({...f, description: e.target.value}))} className="border border-slate-200 rounded p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none resize-none text-slate-900 placeholder-slate-400" />
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div className="grid gap-1">
                        <label className="text-xs font-semibold text-slate-600 uppercase">Priority</label>
-                       <select value={editForm.priority} onChange={e => setEditForm(f => ({...f, priority: e.target.value}))} className="border border-slate-200 rounded p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+                       <select value={editForm.priority} onChange={e => setEditForm(f => ({...f, priority: e.target.value}))} className="border border-slate-200 rounded p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none text-slate-900">
                          {PRIORITIES.map(p => <option key={p} value={p}>{p}</option>)}
                        </select>
                     </div>
                     <div className="grid gap-1">
                        <label className="text-xs font-semibold text-slate-600 uppercase">Contact</label>
-                       <input value={editForm.contactDetails} onChange={e => setEditForm(f => ({...f, contactDetails: e.target.value}))} className="border border-slate-200 rounded p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                       <input value={editForm.contactDetails} onChange={e => setEditForm(f => ({...f, contactDetails: e.target.value}))} className="border border-slate-200 rounded p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none text-slate-900 placeholder-slate-400" />
                     </div>
                   </div>
                   <div className="flex gap-2 justify-end mt-2">
@@ -514,12 +514,17 @@ export default function TicketsPage() {
                 <div className="flex flex-wrap items-end gap-3">
                   <div className="space-y-1.5 flex-1 min-w-[200px]">
                     <label className="text-xs font-semibold tracking-wide text-slate-500 uppercase">Assign Tech</label>
-                    <input 
+                    <select 
                       value={techText} 
                       onChange={e => setTechText(e.target.value)} 
-                      placeholder="e.g. John Doe"
-                      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-                    />
+                      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none text-slate-900 bg-white"
+                    >
+                      <option value="" disabled>Select a technician</option>
+                      <option value="Alex Technician">Alex Technician</option>
+                      <option value="Sarah Engineer">Sarah Engineer</option>
+                      <option value="Mike Fixer">Mike Fixer</option>
+                      <option value="John Doe">John Doe</option>
+                    </select>
                   </div>
                   <button onClick={() => assignTechnician(selected.id)} className="bg-slate-900 hover:bg-slate-800 text-white rounded-lg px-4 py-2 text-sm font-medium transition-colors">
                     Assign
@@ -548,7 +553,7 @@ export default function TicketsPage() {
                       value={resolutionText}
                       onChange={e => setResolutionText(e.target.value)}
                       rows={2}
-                      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none resize-none"
+                      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none resize-none text-slate-900 placeholder-slate-400"
                     />
                   </div>
                 </div>
@@ -573,7 +578,7 @@ export default function TicketsPage() {
                           <input 
                             value={editCommentText}
                             onChange={e => setEditCommentText(e.target.value)}
-                            className="w-full text-sm border-b border-blue-500 bg-blue-50/50 outline-none px-2 py-1"
+                            className="w-full text-sm border-b border-blue-500 bg-blue-50/50 outline-none px-2 py-1 text-slate-900"
                             autoFocus
                           />
                           <button onClick={() => updateComment(c.commentId)} className="text-emerald-600 hover:bg-emerald-50 p-1 rounded">
@@ -603,7 +608,7 @@ export default function TicketsPage() {
                   onChange={(e) => setCommentText(e.target.value)}
                   placeholder="Type your message..."
                   rows={2}
-                  className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all resize-none shadow-inner"
+                  className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all resize-none shadow-inner text-slate-900 placeholder-slate-400"
                 />
                 <button
                   type="button"

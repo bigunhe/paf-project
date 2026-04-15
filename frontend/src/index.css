@@ -33,7 +33,7 @@ body {
 }
 
 .glass-select {
-  @apply glass-input appearance-none;
+  @apply bg-slate-950/50 border border-white/10 text-white placeholder-slate-500 focus:bg-slate-900 focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/60 rounded-lg px-4 py-2.5 outline-none transition-all shadow-inner appearance-none;
 }
 .glass-select option {
   @apply bg-slate-900 text-white;
