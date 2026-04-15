@@ -1,19 +1,38 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
+:root {
+  /* Global Brand Colors - Use these across the project for consistency */
+  --brand-bg-dark: #020617;
+  --brand-glow-purple: hsla(253, 40%, 15%, 1);
+  --brand-glow-blue: hsla(225, 50%, 15%, 0.8);
+  --brand-glow-pink: hsla(339, 40%, 10%, 0.9);
+  --brand-glass-overlay: rgba(15, 23, 42, 0.4); /* slate-900/40 */
+  --brand-border: rgba(255, 255, 255, 0.1);
+  
+  --brand-primary: #2563eb;       /* blue-600 */
+  --brand-primary-hover: #3b82f6; /* blue-500 */
+  --brand-danger: rgba(127, 29, 29, 0.4);  /* red-900/40 */
+}
+
 @theme {
   --font-sans: "Inter", sans-serif;
   --font-heading: "Outfit", sans-serif;
+  
+  /* Make these variables available directly as Tailwind classes (e.g. bg-brand-primary) */
+  --color-brand-bg-dark: var(--brand-bg-dark);
+  --color-brand-primary: var(--brand-primary);
+  --color-brand-primary-hover: var(--brand-primary-hover);
 }
 
 body {
   @apply bg-slate-950 text-slate-200 font-sans tracking-tight min-h-screen overflow-x-hidden;
   position: relative;
-  background-color: #020617;
+  background-color: var(--brand-bg-dark);
   background-image: 
-    radial-gradient(at 0% 0%, hsla(253,40%,15%,1) 0, transparent 40%), 
-    radial-gradient(at 100% 0%, hsla(225,50%,15%,0.8) 0, transparent 40%),
-    radial-gradient(at 50% 100%, hsla(339,40%,10%,0.9) 0, transparent 50%),
+    radial-gradient(at 0% 0%, var(--brand-glow-purple) 0, transparent 40%), 
+    radial-gradient(at 100% 0%, var(--brand-glow-blue) 0, transparent 40%),
+    radial-gradient(at 50% 100%, var(--brand-glow-pink) 0, transparent 50%),
     linear-gradient(to bottom, transparent, rgba(0,0,0,0.8));
   background-attachment: fixed;
 }
