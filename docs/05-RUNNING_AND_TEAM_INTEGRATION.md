@@ -1,5 +1,7 @@
 # Running the MVP and how teammates plug in
 
+**Windows teammates:** use the step-by-step PowerShell guide in **[07-WINDOWS_LOCAL_SETUP.md](07-WINDOWS_LOCAL_SETUP.md)** (clone `development`, `application-local.properties`, `mvnw.cmd`, `npm run dev`).
+
 ## See it running live
 
 You need **MongoDB** (see [MONGODB_SETUP.md](MONGODB_SETUP.md)), **`application-local.properties`** with your Atlas URI (gitignored), and the **`local` Spring profile** when running the backend.
@@ -21,7 +23,7 @@ npm install   # first time only
 npm run dev
 ```
 
-**Browser:** open the URL Vite prints (usually **http://localhost:5173**). You land on **`/app`** (student dashboard) with nav for Browse, My bookings, Report issue, Account, and Login. Use the header **Staff portal** checkbox to switch to **`/admin`** (staff dashboard and operations nav).
+**Browser:** open the URL Vite prints (usually **http://localhost:5173**). You land on the public **`/`** home page and sign in with Google. After login, role from DB decides redirect: **USER → `/app`**, **ADMIN → `/admin`**.
 
 **Quick API check** (optional, third terminal):
 
@@ -41,7 +43,7 @@ Student portal **`/app/*`** and staff portal **`/admin/*`** share the same backe
 
 | Path | Owner area | Purpose |
 |------|------------|---------|
-| `/` | core | Redirect → `/app` |
+| `/` | core | Public home (single sign-in entry) |
 | `/app` | core | Student dashboard (cards / links) |
 | `/app/resources` | facilities | Browse spaces & equipment (Member 1) |
 | `/app/bookings` | bookings | My bookings / request flow (Member 2) |
@@ -51,18 +53,24 @@ Student portal **`/app/*`** and staff portal **`/admin/*`** share the same backe
 | `/admin/resources` | facilities | Manage resource catalogue (Member 1) |
 | `/admin/bookings` | bookings | Booking approvals (Member 2) |
 | `/admin/incidents` | maintenance | Incident / ticket console (Member 3) |
-| `/admin/users` | auth | Users MVP placeholder (Member 4) |
-| `/login` | auth | Login placeholder (OAuth later) |
+| `/admin/users` | auth | User directory from `GET /users` (Member 4) |
+| `/login` | auth | Login page (Google OAuth + local dev fallback) |
+| `/auth/callback` | auth | OAuth callback handler (stores JWT + role redirect) |
 
 **Legacy redirects:** `/resources` → `/app/resources`, `/bookings` → `/app/bookings`, `/tickets` → `/app/report`.
 
-Nav + **AuthContext** (URL-derived `isAdmin` / user id; **Staff portal** checkbox navigates `/app` ↔ `/admin`) + **NotificationDropdown** live in `frontend/src/features/core/Layout.jsx`.
+**Unknown paths:** `NotFoundPage` (links to `/app` and `/admin`) for top-level garbage URLs and for invalid segments under `/app/*` or `/admin/*`.
+
+Nav + **AuthContext** (JWT + `GET /auth/me`; role from DB) + **NotificationDropdown** live in `frontend/src/features/core/Layout.jsx`. OAuth + JWT details (including forced USER reset + admin-email bootstrap in local profile): [09-OAUTH_JWT_AND_ROLES.md](09-OAUTH_JWT_AND_ROLES.md).
+
+Team ownership and gaps: [06-TEAM_OWNERSHIP_AND_STATUS.md](06-TEAM_OWNERSHIP_AND_STATUS.md).
 
 ### Backend REST surface (all under `/api/v1`)
 
+- **Auth:** `GET /auth/me` (Bearer JWT) — `backend/src/main/java/com/smartcampus/auth/web/AuthController.java`; **`GET /auth/dev-login`** (profile `local` only) — `DevAuthController.java`; Google OAuth browser flow: `/oauth2/authorization/google` on the server port (see doc 09).
 - **Users:** `GET /users`, `GET /users/{id}` — `backend/src/main/java/com/smartcampus/auth/UserController.java`
 - **Notifications:** `GET /notifications?userId=`, `PATCH /notifications/{id}/read` — `backend/src/main/java/com/smartcampus/notifications/NotificationController.java`
-- **Resources:** `GET/POST /resources`, `GET/DELETE /resources/{id}` — `backend/src/main/java/com/smartcampus/facilities/ResourceController.java`
+- **Resources:** `GET/POST /resources`, `GET/PATCH/DELETE /resources/{id}` — `backend/src/main/java/com/smartcampus/facilities/ResourceController.java`
 - **Bookings:** `GET/POST /bookings`, `PATCH /bookings/{id}/status` — `backend/src/main/java/com/smartcampus/bookings/BookingController.java`
 - **Tickets:** `GET/POST /tickets`, `GET /tickets/{id}`, `PATCH /tickets/{id}/status`, `PATCH /tickets/{id}/assignment`, `POST /tickets/{id}/comments` — `backend/src/main/java/com/smartcampus/maintenance/TicketController.java`
 

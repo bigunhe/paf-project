@@ -12,6 +12,7 @@
 Whenever a status or type is used in the frontend or backend, it MUST exactly match these uppercase strings. No exceptions.
 
 * **RoleType:** `USER`, `ADMIN`
+* **UserType:** `STUDENT`, `LECTURER`, `STAFF`, `UNASSIGNED` (new sign-ups start as `UNASSIGNED` until profile onboarding completes)
 * **ResourceType:** `ROOM`, `LAB`, `EQUIPMENT`
 * **ResourceStatus:** `ACTIVE`, `OUT_OF_SERVICE`
 * **BookingStatus:** `PENDING`, `APPROVED`, `REJECTED`, `CANCELLED`
@@ -39,7 +40,7 @@ The master catalog item.
 ```
 
 ### Member 2: Booking Management (Booking Model)
-CRITICAL LOGIC: Backend BookingService.java MUST manually check for time overlaps against existing APPROVED bookings for the same resourceId before saving.
+CRITICAL LOGIC: Backend BookingService.java MUST manually check for time overlaps against existing APPROVED bookings for the same resourceId before saving. On create, users with incomplete profiles cannot book; `LECTURER` users get initial status `APPROVED` (subject to overlap rules), while `STUDENT` and `STAFF` get `PENDING`.
 
 ```json
 {
@@ -90,7 +91,7 @@ CRITICAL LOGIC: Tickets can hold up to 3 images (Base64 strings). Comments are e
 ### Member 4: Users & Notifications (User & Notification Models)
 CRITICAL LOGIC: Notifications must trigger when Member 2 approves a booking or Member 3 updates a ticket status.
 
-**User Profile:**
+**User Profile** (returned by `GET /api/v1/auth/me` and related user APIs). Until onboarding, `profileCompleted` is `false`, `userType` is `UNASSIGNED`, and extended fields may be null.
 
 ```json
 {
@@ -98,9 +99,16 @@ CRITICAL LOGIC: Notifications must trigger when Member 2 approves a booking or M
   "email": "user@my.sliit.lk",
   "name": "Student User",
   "role": "USER",
-  "oauthProviderId": "google-123456789"
+  "oauthProviderId": "google-123456789",
+  "userType": "STUDENT",
+  "profileCompleted": true,
+  "contactNumber": "0771234567",
+  "universityId": "IT21987654",
+  "academicUnit": "Computing"
 }
 ```
+
+Profile completion: authenticated user sends `PATCH /api/v1/users/{id}/profile` with `userType` (`STUDENT` | `LECTURER` | `STAFF`), `contactNumber`, `universityId` (student / staff / lecturer ID), and `academicUnit` (faculty or department). Only the signed-in user may update their own `{id}`.
 
 **Notification Payload:**
 
