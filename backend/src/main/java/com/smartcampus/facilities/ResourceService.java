@@ -41,6 +41,18 @@ public class ResourceService {
                 return toResponse(resourceRepository.save(r));
         }
 
+        public ResourceResponse update(String id, ResourceRequest req) {
+                Resource r = resourceRepository
+                                .findById(id)
+                                .orElseThrow(() -> new ResourceNotFoundException("Resource not found: " + id));
+                r.setName(req.name());
+                r.setType(req.type());
+                r.setCapacity(req.capacity());
+                r.setLocation(req.location());
+                r.setStatus(req.status());
+                return toResponse(resourceRepository.save(r));
+        }
+
         public void delete(String id) {
                 if (!resourceRepository.existsById(id)) {
                         throw new ResourceNotFoundException("Resource not found: " + id);
