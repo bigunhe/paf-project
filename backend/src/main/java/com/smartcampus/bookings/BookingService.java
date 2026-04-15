@@ -1,5 +1,8 @@
 package com.smartcampus.bookings;
 
+import com.smartcampus.auth.UserService;
+import com.smartcampus.auth.model.User;
+import com.smartcampus.auth.model.UserType;
 import com.smartcampus.bookings.dto.BookingRequest;
 import com.smartcampus.bookings.dto.BookingResponse;
 import com.smartcampus.bookings.dto.BookingStatusPatchRequest;
@@ -13,7 +16,9 @@ import com.smartcampus.facilities.model.ResourceStatus;
 import com.smartcampus.notifications.NotificationService;
 import java.time.LocalDateTime;
 import java.util.List;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class BookingService {
@@ -21,14 +26,17 @@ public class BookingService {
 	private final BookingRepository bookingRepository;
 	private final ResourceService resourceService;
 	private final NotificationService notificationService;
+	private final UserService userService;
 
 	public BookingService(
 			BookingRepository bookingRepository,
 			ResourceService resourceService,
-			NotificationService notificationService) {
+			NotificationService notificationService,
+			UserService userService) {
 		this.bookingRepository = bookingRepository;
 		this.resourceService = resourceService;
 		this.notificationService = notificationService;
+		this.userService = userService;
 	}
 
 	public List<BookingResponse> list(String userId) {
@@ -43,6 +51,20 @@ public class BookingService {
 		if (!req.startTime().isBefore(req.endTime())) {
 			throw new IllegalArgumentException("startTime must be before endTime");
 		}
+		User booker = userService.getEntityById(req.userId());
+		if (!Boolean.TRUE.equals(booker.getProfileCompleted())) {
+			throw new ResponseStatusException(
+					HttpStatus.FORBIDDEN, "Complete your profile before creating a booking");
+		}
+		UserType userType = booker.getUserType() != null ? booker.getUserType() : UserType.UNASSIGNED;
+		if (userType == UserType.UNASSIGNED) {
+			throw new ResponseStatusException(
+					HttpStatus.FORBIDDEN, "Complete your profile before creating a booking");
+		}
+		// LECTURER: auto-approved when no conflict. STUDENT/STAFF: pending admin review.
+		BookingStatus initialStatus =
+				userType == UserType.LECTURER ? BookingStatus.APPROVED : BookingStatus.PENDING;
+
 		Resource resource = resourceService.getEntityById(req.resourceId());
 		if (resource.getStatus() != ResourceStatus.ACTIVE) {
 			throw new ConflictException("Resource is not available for booking");
@@ -56,7 +78,7 @@ public class BookingService {
 				.endTime(req.endTime())
 				.purpose(req.purpose())
 				.expectedAttendees(req.expectedAttendees())
-				.status(BookingStatus.PENDING)
+				.status(initialStatus)
 				.adminReason(null)
 				.createdAt(LocalDateTime.now())
 				.build();
