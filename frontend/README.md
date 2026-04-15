@@ -20,5 +20,5 @@ If you are developing a production application, we recommend using TypeScript wi
 The app reads the backend base URL from `VITE_API_BASE_URL`.
 
 1. Copy `.env.example` to `.env`.
-2. Set `VITE_API_BASE_URL` to your backend API root, for example `http://localhost:8081/api/v1`.
+2. Set `VITE_API_BASE_URL` to your backend API root, for example `http://localhost:8080/api/v1` (must match the Spring Boot port and `VITE_API_ORIGIN` / OAuth redirect setup).
 3. Restart the Vite dev server after changing `.env`.
