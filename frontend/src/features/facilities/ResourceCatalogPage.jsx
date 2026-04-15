@@ -5,16 +5,20 @@ import { useAuth } from '../core/AuthContext'
 const TYPES = ['ROOM', 'LAB', 'EQUIPMENT']
 const STATUSES = ['ACTIVE', 'OUT_OF_SERVICE']
 
+const emptyForm = () => ({
+  name: '',
+  type: 'ROOM',
+  capacity: 0,
+  location: '',
+  status: 'ACTIVE',
+})
+
 export default function ResourceCatalogPage() {
   const { isAdmin } = useAuth()
   const [resources, setResources] = useState([])
-  const [form, setForm] = useState({
-    name: '',
-    type: 'ROOM',
-    capacity: 0,
-    location: '',
-    status: 'ACTIVE',
-  })
+  const [form, setForm] = useState(emptyForm)
+  const [editingId, setEditingId] = useState(null)
+  const [editForm, setEditForm] = useState(emptyForm)
   const [error, setError] = useState('')
 
   const load = async () => {
@@ -31,7 +35,34 @@ export default function ResourceCatalogPage() {
     setError('')
     try {
       await api.post('/resources', form)
-      setForm({ name: '', type: 'ROOM', capacity: 0, location: '', status: 'ACTIVE' })
+      setForm(emptyForm())
+      await load()
+    } catch (err) {
+      setError(err.response?.data?.message || err.message)
+    }
+  }
+
+  const startEdit = (r) => {
+    setEditingId(r.id)
+    setEditForm({
+      name: r.name,
+      type: r.type,
+      capacity: r.capacity,
+      location: r.location,
+      status: r.status,
+    })
+  }
+
+  const cancelEdit = () => {
+    setEditingId(null)
+    setEditForm(emptyForm())
+  }
+
+  const saveEdit = async (id) => {
+    setError('')
+    try {
+      await api.patch(`/resources/${id}`, editForm)
+      cancelEdit()
       await load()
     } catch (err) {
       setError(err.response?.data?.message || err.message)
@@ -43,6 +74,7 @@ export default function ResourceCatalogPage() {
     setError('')
     try {
       await api.delete(`/resources/${id}`)
+      if (editingId === id) cancelEdit()
       await load()
     } catch (err) {
       setError(err.response?.data?.message || err.message)
@@ -145,30 +177,111 @@ export default function ResourceCatalogPage() {
               <th className="p-3">Capacity</th>
               <th className="p-3">Location</th>
               <th className="p-3">Status</th>
-              {isAdmin && <th className="p-3 w-24">Actions</th>}
+              {isAdmin && <th className="p-3 w-40">Actions</th>}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200">
-            {resources.map((r) => (
-              <tr key={r.id}>
-                <td className="p-3 text-slate-900 font-medium">{r.name}</td>
-                <td className="p-3 text-slate-500">{r.type}</td>
-                <td className="p-3 text-slate-500">{r.capacity}</td>
-                <td className="p-3 text-slate-500">{r.location}</td>
-                <td className="p-3 text-slate-500">{r.status}</td>
-                {isAdmin && (
-                  <td className="p-3">
-                    <button
-                      type="button"
-                      onClick={() => remove(r.id)}
-                      className="bg-red-500 hover:bg-red-600 text-white rounded-lg py-1 px-2 text-xs"
-                    >
-                      Delete
-                    </button>
+            {resources.map((r) =>
+              isAdmin && editingId === r.id ? (
+                <tr key={r.id} className="bg-slate-50/80">
+                  <td className="p-2">
+                    <input
+                      value={editForm.name}
+                      onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))}
+                      className="border border-slate-200 rounded px-2 py-1 w-full min-w-[8rem]"
+                    />
                   </td>
-                )}
-              </tr>
-            ))}
+                  <td className="p-2">
+                    <select
+                      value={editForm.type}
+                      onChange={(e) => setEditForm((f) => ({ ...f, type: e.target.value }))}
+                      className="border border-slate-200 rounded px-2 py-1 w-full"
+                    >
+                      {TYPES.map((t) => (
+                        <option key={t} value={t}>
+                          {t}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
+                  <td className="p-2">
+                    <input
+                      type="number"
+                      min={0}
+                      value={editForm.capacity}
+                      onChange={(e) => setEditForm((f) => ({ ...f, capacity: Number(e.target.value) }))}
+                      className="border border-slate-200 rounded px-2 py-1 w-20"
+                    />
+                  </td>
+                  <td className="p-2">
+                    <input
+                      value={editForm.location}
+                      onChange={(e) => setEditForm((f) => ({ ...f, location: e.target.value }))}
+                      className="border border-slate-200 rounded px-2 py-1 w-full min-w-[8rem]"
+                    />
+                  </td>
+                  <td className="p-2">
+                    <select
+                      value={editForm.status}
+                      onChange={(e) => setEditForm((f) => ({ ...f, status: e.target.value }))}
+                      className="border border-slate-200 rounded px-2 py-1 w-full"
+                    >
+                      {STATUSES.map((s) => (
+                        <option key={s} value={s}>
+                          {s}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
+                  <td className="p-2">
+                    <div className="flex flex-wrap gap-1">
+                      <button
+                        type="button"
+                        onClick={() => saveEdit(r.id)}
+                        className="bg-emerald-500 hover:bg-emerald-600 text-white rounded py-1 px-2 text-xs"
+                      >
+                        Save
+                      </button>
+                      <button
+                        type="button"
+                        onClick={cancelEdit}
+                        className="bg-slate-200 hover:bg-slate-300 text-slate-800 rounded py-1 px-2 text-xs"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                <tr key={r.id}>
+                  <td className="p-3 text-slate-900 font-medium">{r.name}</td>
+                  <td className="p-3 text-slate-500">{r.type}</td>
+                  <td className="p-3 text-slate-500">{r.capacity}</td>
+                  <td className="p-3 text-slate-500">{r.location}</td>
+                  <td className="p-3 text-slate-500">{r.status}</td>
+                  {isAdmin && (
+                    <td className="p-3">
+                      <div className="flex flex-wrap gap-1">
+                        <button
+                          type="button"
+                          onClick={() => startEdit(r)}
+                          className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-1 px-2 text-xs"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => remove(r.id)}
+                          className="bg-red-500 hover:bg-red-600 text-white rounded-lg py-1 px-2 text-xs"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </td>
+                  )}
+                </tr>
+              ),
+            )}
           </tbody>
         </table>
       </div>
