@@ -273,15 +273,17 @@ export default function MyBookings() {
               <p className="mt-3 max-w-2xl text-sm text-slate-300">
                 Track approvals, monitor your timeline, and launch new requests from one focused interface.
               </p>
-            </div>
 
-            <button
-              type="button"
-              onClick={() => setIsModalOpen(true)}
-              className="rounded-xl bg-cyan-400 px-4 py-2.5 text-sm font-semibold text-slate-900 shadow-[0_12px_24px_-16px_rgba(34,211,238,0.8)] transition hover:-translate-y-0.5 hover:bg-cyan-300"
-            >
-              + New Request
-            </button>
+              <button
+                type="button"
+                onClick={() => setIsModalOpen(true)}
+                className="mt-5 inline-flex items-center gap-3 rounded-2xl border border-cyan-100/70 bg-cyan-300 px-6 py-3.5 text-base font-bold text-slate-950 shadow-[0_18px_36px_-16px_rgba(34,211,238,0.85)] ring-2 ring-cyan-200/70 transition-all duration-200 hover:-translate-y-0.5 hover:bg-cyan-200 hover:shadow-[0_22px_40px_-14px_rgba(34,211,238,0.9)]"
+              >
+                <span className="text-slate-950">+</span>
+                Create New Request
+                <span className="text-slate-950">→</span>
+              </button>
+            </div>
           </div>
 
           <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -383,9 +385,6 @@ export default function MyBookings() {
                     {nextUpBookings[0]
                       ? `${formatPrettyDate(nextUpBookings[0].date)} • ${nextUpBookings[0].startTime}`
                       : 'No approved slot scheduled'}
-                  </p>
-                  <p className="mt-1 text-xs text-slate-200/90">
-                    API: {resourcesError ? 'Degraded' : resourcesLoading ? 'Syncing data' : 'Operational'}
                   </p>
                 </div>
 

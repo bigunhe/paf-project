@@ -4,6 +4,47 @@ function getToday() {
   return new Date().toISOString().slice(0, 10)
 }
 
+function isValidTimeRange(startTime, endTime) {
+  if (!startTime || !endTime) return false
+  return startTime < endTime
+}
+
+function isPastDate(dateValue) {
+  if (!dateValue) return true
+  return dateValue < getToday()
+}
+
+function formatTimeLabel(timeValue) {
+  if (!timeValue) return ''
+
+  const [hourValue, minuteValue] = timeValue.split(':').map(Number)
+  if (Number.isNaN(hourValue) || Number.isNaN(minuteValue)) {
+    return timeValue
+  }
+
+  const period = hourValue >= 12 ? 'PM' : 'AM'
+  const displayHour = hourValue % 12 || 12
+  const paddedMinutes = String(minuteValue).padStart(2, '0')
+  return `${displayHour}:${paddedMinutes} ${period}`
+}
+
+function buildTimeOptions(intervalMinutes = 30, startHour = 7, endHour = 22) {
+  const options = []
+
+  for (let hour = startHour; hour <= endHour; hour += 1) {
+    for (let minute = 0; minute < 60; minute += intervalMinutes) {
+      if (hour === endHour && minute > 0) {
+        break
+      }
+
+      const timeValue = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`
+      options.push({ value: timeValue, label: formatTimeLabel(timeValue) })
+    }
+  }
+
+  return options
+}
+
 export default function BookingFormModal({
   isOpen,
   resources,
@@ -69,10 +110,33 @@ export default function BookingFormModal({
     }
   }, [isOpen, resources, form.resourceId])
 
+  useEffect(() => {
+    if (!form.startTime || !form.endTime) return
+    if (form.endTime <= form.startTime) {
+      setForm((prev) => ({ ...prev, endTime: '' }))
+    }
+  }, [form.startTime, form.endTime])
+
   const selectedResource = useMemo(
     () => resources.find((resource) => resource.id === form.resourceId),
     [resources, form.resourceId],
   )
+
+  const startTimeOptions = useMemo(() => {
+    const options = buildTimeOptions(30)
+    if (form.startTime && !options.some((option) => option.value === form.startTime)) {
+      options.unshift({ value: form.startTime, label: formatTimeLabel(form.startTime) })
+    }
+    return options
+  }, [form.startTime])
+
+  const endTimeOptions = useMemo(() => {
+    const options = buildTimeOptions(30).filter((option) => !form.startTime || option.value > form.startTime)
+    if (form.endTime && !options.some((option) => option.value === form.endTime)) {
+      options.unshift({ value: form.endTime, label: formatTimeLabel(form.endTime) })
+    }
+    return options
+  }, [form.startTime, form.endTime])
 
   if (!isOpen) {
     return null
@@ -82,28 +146,95 @@ export default function BookingFormModal({
     event.preventDefault()
     setLocalError('')
 
+    const studentId = form.studentId.trim()
+    const studentName = form.studentName.trim()
+    const faculty = form.faculty.trim()
+    const purpose = form.purpose.trim()
+    const attendeesCount = Number(form.attendeesCount)
+
+    if (resourcesLoading) {
+      setLocalError('Please wait until resources finish loading')
+      return
+    }
+
+    if (resourcesError) {
+      setLocalError('Resources could not be loaded. Please try again.')
+      return
+    }
+
     if (!form.resourceId) {
       setLocalError('Please select a resource')
       return
     }
 
-    if (form.startTime >= form.endTime) {
+    if (!selectedResource) {
+      setLocalError('Selected resource is not available')
+      return
+    }
+
+    if (!studentId) {
+      setLocalError('Student ID is required')
+      return
+    }
+
+    if (studentId.length < 5) {
+      setLocalError('Student ID must be at least 5 characters')
+      return
+    }
+
+    if (!studentName) {
+      setLocalError('Student Name is required')
+      return
+    }
+
+    if (studentName.length < 3) {
+      setLocalError('Student Name must be at least 3 characters')
+      return
+    }
+
+    if (!faculty) {
+      setLocalError('Faculty / Department is required')
+      return
+    }
+
+    if (isPastDate(form.date)) {
+      setLocalError('Booking date cannot be in the past')
+      return
+    }
+
+    if (!isValidTimeRange(form.startTime, form.endTime)) {
       setLocalError('Start time must be earlier than end time')
       return
     }
 
-    if (!form.studentId.trim() || !form.studentName.trim() || !form.faculty.trim()) {
-      setLocalError('Student ID, Student Name, and Faculty are required')
+    if (!purpose) {
+      setLocalError('Purpose / description is required')
+      return
+    }
+
+    if (purpose.length < 10) {
+      setLocalError('Purpose should be at least 10 characters')
+      return
+    }
+
+    if (!Number.isInteger(attendeesCount) || attendeesCount < 1) {
+      setLocalError('Number of attendees must be at least 1')
+      return
+    }
+
+    if (attendeesCount > 1000) {
+      setLocalError('Number of attendees looks too large')
       return
     }
 
     onSubmit({
       ...form,
-      studentId: form.studentId.trim(),
-      studentName: form.studentName.trim(),
-      faculty: form.faculty.trim(),
+      studentId,
+      studentName,
+      faculty,
+      purpose,
       resourceName: selectedResource?.name || 'Unknown resource',
-      attendeesCount: Number(form.attendeesCount),
+      attendeesCount,
     })
   }
 
@@ -139,12 +270,14 @@ export default function BookingFormModal({
         <div className="space-y-5">
           <section className="space-y-3 rounded-xl border border-slate-200 bg-slate-50/60 p-4">
             <h3 className="text-sm font-semibold text-slate-800">Student Identification</h3>
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-4 md:grid-cols-2">
               <label className="grid gap-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
                 Student ID
                 <input
                   type="text"
                   required
+                  minLength={5}
+                  maxLength={20}
                   value={form.studentId}
                   onChange={(event) => setForm((prev) => ({ ...prev, studentId: event.target.value }))}
                   placeholder="IT23566552"
@@ -157,6 +290,8 @@ export default function BookingFormModal({
                 <input
                   type="text"
                   required
+                  minLength={3}
+                  maxLength={80}
                   value={form.studentName}
                   onChange={(event) => setForm((prev) => ({ ...prev, studentName: event.target.value }))}
                   placeholder="Shyni Atapattu"
@@ -170,6 +305,8 @@ export default function BookingFormModal({
               <input
                 type="text"
                 required
+                minLength={2}
+                maxLength={80}
                 value={form.faculty}
                 onChange={(event) => setForm((prev) => ({ ...prev, faculty: event.target.value }))}
                 placeholder="Computing"
@@ -209,7 +346,7 @@ export default function BookingFormModal({
                   type="text"
                   readOnly
                   value={selectedResource?.name || ''}
-                  className="rounded-lg border border-slate-200 bg-slate-100 px-3 py-2 text-sm font-medium text-slate-600"
+                  className="w-full rounded-lg border border-slate-200 bg-slate-100 px-3 py-2.5 text-sm font-medium text-slate-600"
                 />
               </label>
             </div>
@@ -217,7 +354,7 @@ export default function BookingFormModal({
 
           <section className="space-y-3 rounded-xl border border-slate-200 bg-slate-50/60 p-4">
             <h3 className="text-sm font-semibold text-slate-800">Scheduling Details</h3>
-            <div className="grid gap-3 sm:grid-cols-3">
+            <div className="grid gap-4 md:grid-cols-3">
               <label className="grid gap-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
                 Date
                 <input
@@ -231,26 +368,39 @@ export default function BookingFormModal({
               </label>
 
               <label className="grid gap-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Start Time
-                <input
-                  type="time"
+                Preferred Start Time
+                <select
                   required
                   value={form.startTime}
                   onChange={(event) => setForm((prev) => ({ ...prev, startTime: event.target.value }))}
                   className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 focus:border-cyan-500 focus:outline-none"
-                />
+                >
+                  <option value="">Choose a start time</option>
+                  {startTimeOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                <span className="text-[11px] normal-case text-slate-400">30-minute slots from 7:00 AM onward</span>
               </label>
 
               <label className="grid gap-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                End Time
-                <input
-                  type="time"
-                  min={form.startTime || undefined}
+                Preferred End Time
+                <select
                   required
                   value={form.endTime}
                   onChange={(event) => setForm((prev) => ({ ...prev, endTime: event.target.value }))}
                   className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 focus:border-cyan-500 focus:outline-none"
-                />
+                >
+                  <option value="">Choose an end time</option>
+                  {endTimeOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                <span className="text-[11px] normal-case text-slate-400">Must be later than start time</span>
               </label>
             </div>
           </section>
@@ -263,6 +413,7 @@ export default function BookingFormModal({
                 required
                 rows={3}
                 maxLength={240}
+                minLength={10}
                 value={form.purpose}
                 onChange={(event) => setForm((prev) => ({ ...prev, purpose: event.target.value }))}
                 className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 focus:border-cyan-500 focus:outline-none"
@@ -274,6 +425,7 @@ export default function BookingFormModal({
               <input
                 type="number"
                 min={1}
+                step={1}
                 required
                 value={form.attendeesCount}
                 onChange={(event) => setForm((prev) => ({ ...prev, attendeesCount: event.target.value }))}
