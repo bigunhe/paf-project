@@ -1,25 +1,70 @@
-import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from './AuthContext'
 import NotificationDropdown from '../notifications/NotificationDropdown'
 
 export default function Layout() {
-  const navigate = useNavigate()
-  const { isStaffPortal } = useAuth()
+  const location = useLocation()
+  const { user, logout } = useAuth()
 
   const navClass = ({ isActive }) =>
     `px-3 py-2 rounded-lg text-sm font-medium ${isActive ? 'bg-slate-200 text-slate-900' : 'text-slate-500 hover:bg-slate-100'}`
 
-  const homeLink = isStaffPortal ? '/admin' : '/app'
+  const inAdminArea = location.pathname.startsWith('/admin')
+  const onProfileSetup = location.pathname === '/complete-profile'
+  const profileDone = user?.profileCompleted === true
+
+  const showStaffNav = profileDone && user?.role === 'ADMIN' && inAdminArea
+  const showStudentNav =
+    profileDone && user && (user.role === 'USER' || (user.role === 'ADMIN' && !inAdminArea))
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-100 via-sky-50 to-blue-200 text-slate-900">
       <header className="bg-white border-b border-slate-200 shadow-sm">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-4 flex-wrap">
-          <Link to={homeLink} className="text-lg font-semibold text-slate-900">
+          <Link to="/" className="text-lg font-semibold text-slate-900">
             Smart Campus Hub
           </Link>
           <nav className="flex flex-wrap items-center gap-1">
-            {isStaffPortal ? (
+            {!user && (
+              <>
+                <NavLink to="/" end className={navClass}>
+                  Home
+                </NavLink>
+                <NavLink to="/login" className={navClass}>
+                  Sign in
+                </NavLink>
+              </>
+            )}
+
+            {showStudentNav && (
+              <>
+                <NavLink to="/app" end className={navClass}>
+                  Home
+                </NavLink>
+                <NavLink to="/app/resources" className={navClass}>
+                  Browse
+                </NavLink>
+                <NavLink to="/app/bookings" className={navClass}>
+                  My bookings
+                </NavLink>
+                <NavLink to="/app/report" className={navClass}>
+                  Report issue
+                </NavLink>
+                <NavLink to="/app/account" className={navClass}>
+                  My Account
+                </NavLink>
+                {user?.role === 'ADMIN' && (
+                  <Link
+                    to="/admin"
+                    className="px-3 py-2 rounded-lg text-sm font-medium text-blue-700 hover:bg-blue-50"
+                  >
+                    Staff portal
+                  </Link>
+                )}
+              </>
+            )}
+
+            {showStaffNav && (
               <>
                 <NavLink to="/admin" end className={navClass}>
                   Dashboard
@@ -36,40 +81,37 @@ export default function Layout() {
                 <NavLink to="/admin/users" className={navClass}>
                   Users
                 </NavLink>
-              </>
-            ) : (
-              <>
-                <NavLink to="/app" end className={navClass}>
-                  Home
-                </NavLink>
-                <NavLink to="/app/resources" className={navClass}>
-                  Browse
-                </NavLink>
-                <NavLink to="/app/bookings" className={navClass}>
-                  My bookings
-                </NavLink>
-                <NavLink to="/app/report" className={navClass}>
-                  Report issue
-                </NavLink>
                 <NavLink to="/app/account" className={navClass}>
-                  Account
+                  My Account
                 </NavLink>
+                <Link
+                  to="/app"
+                  className="px-3 py-2 rounded-lg text-sm font-medium text-blue-700 hover:bg-blue-50"
+                >
+                  Student portal
+                </Link>
               </>
             )}
-            <NavLink to="/login" className={navClass}>
-              Login
-            </NavLink>
-            <NotificationDropdown />
+
+            {onProfileSetup && user && (
+              <span className="text-sm text-amber-700 font-medium px-2">Complete your profile to continue</span>
+            )}
+
+            {user && profileDone && <NotificationDropdown />}
+
+            {user && (
+              <button
+                type="button"
+                onClick={() => {
+                  logout()
+                  window.location.assign('/')
+                }}
+                className="px-3 py-2 rounded-lg text-sm font-medium text-slate-500 hover:bg-slate-100"
+              >
+                Sign out
+              </button>
+            )}
           </nav>
-          <label className="flex items-center gap-2 text-sm text-slate-500 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={isStaffPortal}
-              onChange={(e) => navigate(e.target.checked ? '/admin' : '/app')}
-              className="rounded border-slate-200"
-            />
-            Staff portal
-          </label>
         </div>
       </header>
       <main className="max-w-6xl mx-auto px-4 py-8">

@@ -7,6 +7,7 @@ import com.smartcampus.facilities.model.ResourceType;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -29,6 +30,7 @@ public class ResourceController {
         }
 
         @GetMapping
+        @PreAuthorize("isAuthenticated()")
         public List<ResourceResponse> list(@RequestParam(required = false) ResourceType type,
                         @RequestParam(required = false) Integer minCapacity,
                         @RequestParam(required = false) String location,
@@ -38,22 +40,26 @@ public class ResourceController {
         }
 
         @GetMapping("/{id}")
+        @PreAuthorize("isAuthenticated()")
         public ResourceResponse get(@PathVariable String id) {
                 return resourceService.getById(id);
         }
 
         @PostMapping
+        @PreAuthorize("hasRole('ADMIN')")
         @ResponseStatus(HttpStatus.CREATED)
         public ResourceResponse create(@Valid @RequestBody ResourceRequest request) {
                 return resourceService.create(request);
         }
 
         @PutMapping("/{id}")
+        @PreAuthorize("hasRole('ADMIN')")
         public ResourceResponse update(@PathVariable String id, @Valid @RequestBody ResourceRequest request) {
                 return resourceService.update(id, request);
         }
 
         @DeleteMapping("/{id}")
+        @PreAuthorize("hasRole('ADMIN')")
         @ResponseStatus(HttpStatus.NO_CONTENT)
         public void delete(@PathVariable String id) {
                 resourceService.delete(id);
