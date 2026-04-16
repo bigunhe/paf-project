@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import toast from 'react-hot-toast'
 import api from '../features/core/api'
 import { useAuth } from '../features/core/AuthContext'
 import PageHero, { PageHeroMetric } from '../features/core/PageHero'
@@ -6,6 +8,7 @@ import { PRIMARY_BUTTON_CLASS } from '../features/core/ui'
 
 export default function MyBookings() {
   const { currentUserId } = useAuth()
+  const [searchParams] = useSearchParams()
   const [bookings, setBookings] = useState([])
   const [resources, setResources] = useState([])
   const [form, setForm] = useState({
@@ -60,11 +63,25 @@ export default function MyBookings() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUserId])
 
+  const bookingIdParam = searchParams.get('bookingId')
+  useEffect(() => {
+    if (!bookingIdParam || loading || bookings.length === 0) return
+    const el = document.querySelector(`[data-booking-id="${bookingIdParam}"]`)
+    if (!el) return
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    el.classList.add('ring-2', 'ring-cyan-500', 'ring-offset-2', 'bg-sky-50/80')
+    const t = window.setTimeout(() => {
+      el.classList.remove('ring-2', 'ring-cyan-500', 'ring-offset-2', 'bg-sky-50/80')
+    }, 2400)
+    return () => window.clearTimeout(t)
+  }, [bookingIdParam, loading, bookings])
+
   const submit = async (e) => {
     e.preventDefault()
     setError('')
     try {
       await api.post('/bookings', { ...form, userId: currentUserId })
+      toast.success('Booking request submitted.')
       setForm((prev) => ({ ...prev, purpose: '', expectedAttendees: 0 }))
       await load()
     } catch (err) {
@@ -206,7 +223,7 @@ export default function MyBookings() {
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {bookings.map((booking) => (
-                    <tr key={booking.id} className="bg-white">
+                    <tr key={booking.id} data-booking-id={booking.id} className="bg-white transition-shadow">
                       <td className="px-4 py-4 font-semibold text-slate-900 md:px-6">
                         {resourceNameById.get(booking.resourceId) ?? booking.resourceId}
                       </td>

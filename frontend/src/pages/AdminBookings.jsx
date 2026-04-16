@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import api from '../features/core/api'
 import PageHero, { PageHeroMetric } from '../features/core/PageHero'
 import { PRIMARY_FILTER_ACTIVE_CLASS } from '../features/core/ui'
@@ -6,6 +7,7 @@ import { PRIMARY_FILTER_ACTIVE_CLASS } from '../features/core/ui'
 const STATUS_OPTIONS = ['', 'PENDING', 'APPROVED', 'REJECTED', 'CANCELLED']
 
 export default function AdminBookings() {
+  const [searchParams] = useSearchParams()
   const [bookings, setBookings] = useState([])
   const [resources, setResources] = useState([])
   const [loading, setLoading] = useState(true)
@@ -57,6 +59,27 @@ export default function AdminBookings() {
     if (!filters.status) return bookings
     return bookings.filter((booking) => booking.status === filters.status)
   }, [bookings, filters.status])
+
+  const bookingIdParam = searchParams.get('bookingId')
+  useEffect(() => {
+    if (!bookingIdParam || loading || bookings.length === 0) return
+    const exists = bookings.some((b) => b.id === bookingIdParam)
+    if (!exists) return
+    const visible = filteredBookings.some((b) => b.id === bookingIdParam)
+    if (!visible) setFilters({ status: '' })
+  }, [bookingIdParam, loading, bookings, filteredBookings])
+
+  useEffect(() => {
+    if (!bookingIdParam || loading) return
+    const el = document.querySelector(`[data-booking-id="${bookingIdParam}"]`)
+    if (!el) return
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    el.classList.add('ring-2', 'ring-cyan-500', 'ring-offset-2', 'bg-sky-50/80')
+    const t = window.setTimeout(() => {
+      el.classList.remove('ring-2', 'ring-cyan-500', 'ring-offset-2', 'bg-sky-50/80')
+    }, 2400)
+    return () => window.clearTimeout(t)
+  }, [bookingIdParam, loading, filteredBookings])
 
   return (
     <section className="space-y-6">
@@ -116,7 +139,7 @@ export default function AdminBookings() {
               {filteredBookings.map((booking) => {
                 const actionDisabled = booking.status !== 'PENDING' || actionId === booking.id
                 return (
-                  <tr key={booking.id} className="transition hover:bg-slate-50/70">
+                  <tr key={booking.id} data-booking-id={booking.id} className="transition hover:bg-slate-50/70">
                     <td className="px-4 py-4 text-slate-700">{booking.userId}</td>
                     <td className="px-4 py-4 font-semibold text-slate-800">
                       {resourceNameById.get(booking.resourceId) ?? booking.resourceId}

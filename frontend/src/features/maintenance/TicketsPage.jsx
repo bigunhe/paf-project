@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import toast from 'react-hot-toast'
 import api from '../core/api'
 import { useAuth } from '../core/AuthContext'
 import PageHero, { PageHeroMetric } from '../core/PageHero'
@@ -32,6 +34,7 @@ function technicianInitials(name) {
 
 export default function TicketsPage() {
   const { currentUserId, isAdmin } = useAuth()
+  const [searchParams] = useSearchParams()
   const [tickets, setTickets] = useState([])
   const [resources, setResources] = useState([])
   const [selected, setSelected] = useState(null)
@@ -99,6 +102,7 @@ export default function TicketsPage() {
         userId: currentUserId,
         imageAttachments,
       })
+      toast.success('Ticket submitted.')
       setForm({
         resourceId: form.resourceId,
         category: '',
@@ -123,6 +127,25 @@ export default function TicketsPage() {
       setError(err.response?.data?.message || err.message)
     }
   }
+
+  const ticketIdParam = searchParams.get('ticketId')
+  useEffect(() => {
+    if (!ticketIdParam) return
+    openDetail(ticketIdParam).catch(() => {})
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ticketIdParam, currentUserId, isAdmin])
+
+  useEffect(() => {
+    if (!ticketIdParam) return
+    const el = document.querySelector(`[data-ticket-id="${ticketIdParam}"]`)
+    if (!el) return
+    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    el.classList.add('bg-sky-50', 'ring-2', 'ring-cyan-500', 'ring-inset')
+    const t = window.setTimeout(() => {
+      el.classList.remove('bg-sky-50', 'ring-2', 'ring-cyan-500', 'ring-inset')
+    }, 2400)
+    return () => window.clearTimeout(t)
+  }, [ticketIdParam, tickets])
 
   const addComment = async () => {
     if (!selected || !commentText.trim()) return
@@ -341,7 +364,7 @@ export default function TicketsPage() {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {tickets.map((t) => (
-                  <tr key={t.id} className="hover:bg-slate-50/50 transition-colors">
+                  <tr key={t.id} data-ticket-id={t.id} className="hover:bg-slate-50/50 transition-colors">
                     <td className="px-6 py-4 text-slate-900 font-medium">{t.category}</td>
                     <td className="px-6 py-4">
                       <span
