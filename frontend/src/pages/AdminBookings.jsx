@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import api from '../features/core/api'
+import PageHero, { PageHeroMetric } from '../features/core/PageHero'
 import { PRIMARY_FILTER_ACTIVE_CLASS } from '../features/core/ui'
 
 const STATUS_OPTIONS = ['', 'PENDING', 'APPROVED', 'REJECTED', 'CANCELLED']
@@ -59,17 +60,14 @@ export default function AdminBookings() {
 
   return (
     <section className="space-y-6">
+      <PageHero
+        eyebrow="Enterprise Workspace"
+        title="Booking Requests"
+        description="Review incoming requests and approve or reject based on campus policy."
+        aside={<PageHeroMetric label="In view" value={filteredBookings.length} />}
+      />
       <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_18px_34px_-26px_rgba(15,23,42,0.45)]">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h1 className="text-4xl font-bold tracking-tight text-slate-900">Booking Requests</h1>
-            <p className="mt-2 text-sm font-medium text-slate-400">
-              {filteredBookings.length.toLocaleString()} bookings in current view
-            </p>
-          </div>
-        </div>
-
-        <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
           <div className="flex flex-wrap items-center gap-2">
             <span className="mr-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Filter by Status</span>
             {STATUS_OPTIONS.map((statusOption) => {

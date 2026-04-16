@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import api from '../core/api'
+import PageHero, { PageHeroMetric } from '../core/PageHero'
+import { PRIMARY_FILTER_ACTIVE_CLASS } from '../core/ui'
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState([])
@@ -36,12 +38,12 @@ export default function AdminUsersPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold text-slate-900">Users & access</h1>
-        <p className="text-slate-500 text-sm">
-          View and categorize user accounts by type for daily operational monitoring.
-        </p>
-      </div>
+      <PageHero
+        eyebrow="Enterprise Workspace"
+        title="Users & access"
+        description="View and categorize user accounts by type for daily operational monitoring."
+        aside={<PageHeroMetric label="In view" value={visibleUsers.length} />}
+      />
 
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-3">{error}</div>
@@ -53,7 +55,7 @@ export default function AdminUsersPage() {
           type="button"
           onClick={() => setTypeFilter('ALL')}
           className={`px-3 py-1.5 rounded-lg text-sm ${
-            typeFilter === 'ALL' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+            typeFilter === 'ALL' ? PRIMARY_FILTER_ACTIVE_CLASS : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
           }`}
         >
           All non-admin users
@@ -62,9 +64,7 @@ export default function AdminUsersPage() {
           type="button"
           onClick={() => setTypeFilter('STUDENT')}
           className={`px-3 py-1.5 rounded-lg text-sm ${
-            typeFilter === 'STUDENT'
-              ? 'bg-blue-600 text-white'
-              : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+            typeFilter === 'STUDENT' ? PRIMARY_FILTER_ACTIVE_CLASS : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
           }`}
         >
           Students
@@ -73,9 +73,7 @@ export default function AdminUsersPage() {
           type="button"
           onClick={() => setTypeFilter('LECTURER')}
           className={`px-3 py-1.5 rounded-lg text-sm ${
-            typeFilter === 'LECTURER'
-              ? 'bg-blue-600 text-white'
-              : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+            typeFilter === 'LECTURER' ? PRIMARY_FILTER_ACTIVE_CLASS : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
           }`}
         >
           Lecturers
@@ -84,7 +82,7 @@ export default function AdminUsersPage() {
           type="button"
           onClick={() => setTypeFilter('STAFF')}
           className={`px-3 py-1.5 rounded-lg text-sm ${
-            typeFilter === 'STAFF' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+            typeFilter === 'STAFF' ? PRIMARY_FILTER_ACTIVE_CLASS : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
           }`}
         >
           Staff

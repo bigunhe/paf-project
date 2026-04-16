@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import api from '../features/core/api'
 import { useAuth } from '../features/core/AuthContext'
+import PageHero, { PageHeroMetric } from '../features/core/PageHero'
 import { PRIMARY_BUTTON_CLASS } from '../features/core/ui'
 
 export default function MyBookings() {
@@ -73,21 +74,12 @@ export default function MyBookings() {
 
   return (
     <section className="relative isolate space-y-6 overflow-hidden rounded-[2rem] border border-slate-200 bg-gradient-to-b from-slate-50 via-white to-slate-100/80 p-4 shadow-[0_30px_70px_-45px_rgba(15,23,42,0.55)] md:p-6">
-      <header className="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 px-5 py-6 text-white shadow-[0_18px_40px_-26px_rgba(15,23,42,0.75)] md:px-7">
-        <div className="relative flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-200/90">Enterprise Workspace</p>
-            <h1 className="mt-2 text-3xl font-semibold tracking-tight md:text-4xl">Resource Booking Hub</h1>
-            <p className="mt-2 max-w-3xl text-sm text-slate-200/90">
-              Create and manage your booking requests with a streamlined institutional workflow.
-            </p>
-          </div>
-          <div className="rounded-xl border border-white/20 bg-white/10 px-4 py-2 text-right backdrop-blur">
-            <p className="text-[10px] uppercase tracking-[0.18em] text-cyan-100/85">Records</p>
-            <p className="text-2xl font-semibold text-white">{totalBookings}</p>
-          </div>
-        </div>
-      </header>
+      <PageHero
+        eyebrow="Enterprise Workspace"
+        title="Resource Booking Hub"
+        description="Create and manage your booking requests with a streamlined institutional workflow."
+        aside={<PageHeroMetric label="Records" value={totalBookings} />}
+      />
 
       {error && (
         <div className="relative rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">

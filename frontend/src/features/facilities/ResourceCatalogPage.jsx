@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import api from '../core/api'
 import { useAuth } from '../core/AuthContext'
+import PageHero, { PageHeroMetric } from '../core/PageHero'
 import { PRIMARY_BUTTON_CLASS } from '../core/ui'
 
 const TYPES = ['ROOM', 'LAB', 'EQUIPMENT']
@@ -138,34 +139,18 @@ export default function ResourceCatalogPage() {
 
   return (
     <div className="space-y-8">
-      <section className="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 md:p-8">
-        <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
-          <div className="space-y-2 max-w-2xl">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Member 1</p>
-            <h1 className="text-3xl font-semibold text-slate-900">
-              {isAdmin ? 'Manage resource catalogue' : 'Browse bookable resources'}
-            </h1>
-            <p className="text-slate-500">
-              Maintain lecture halls, labs, meeting rooms, and equipment with capacity, location, availability,
-              and operational status.
-            </p>
+      <PageHero
+        eyebrow="Facilities"
+        title={isAdmin ? 'Manage resource catalogue' : 'Browse bookable resources'}
+        description="Maintain lecture halls, labs, meeting rooms, and equipment with capacity, location, availability, and operational status."
+        aside={
+          <div className="flex flex-wrap justify-end gap-2">
+            <PageHeroMetric label="Total" value={resources.length} />
+            <PageHeroMetric label="Active" value={activeCount} />
+            <PageHeroMetric label="Out of service" value={outOfServiceCount} />
           </div>
-          <div className="grid grid-cols-3 gap-3 w-full lg:w-auto">
-            <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-              <div className="text-xl font-semibold text-slate-900">{resources.length}</div>
-              <div className="text-xs text-slate-500">Total</div>
-            </div>
-            <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-              <div className="text-xl font-semibold text-slate-900">{activeCount}</div>
-              <div className="text-xs text-slate-500">Active</div>
-            </div>
-            <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-              <div className="text-xl font-semibold text-slate-900">{outOfServiceCount}</div>
-              <div className="text-xs text-slate-500">Out of service</div>
-            </div>
-          </div>
-        </div>
-      </section>
+        }
+      />
 
       {error && <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-3">{error}</div>}
 
