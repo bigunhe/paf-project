@@ -1,13 +1,15 @@
 import { Link } from 'react-router-dom'
+import PageHero from './PageHero'
 import { PRIMARY_BUTTON_CLASS } from './ui'
 
 export default function NotFoundPage() {
   return (
-    <div className="max-w-lg space-y-4">
-      <h1 className="text-2xl font-semibold text-slate-900">Page not found</h1>
-      <p className="text-slate-500 text-sm">
-        That URL is not part of the Smart Campus Hub. Check the address or go back to the student or staff home.
-      </p>
+    <div className="space-y-6 max-w-lg">
+      <PageHero
+        eyebrow="Error"
+        title="Page not found"
+        description="That URL is not part of the Smart Campus Hub. Check the address or go back to the student or staff home."
+      />
       <div className="flex flex-wrap gap-3">
         <Link
           to="/app"

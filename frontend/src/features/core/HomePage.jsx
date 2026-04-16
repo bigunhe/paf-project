@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { OAUTH_GOOGLE_URL } from './constants'
+import PageHero from './PageHero'
 import { PRIMARY_BUTTON_CLASS } from './ui'
 
 const highlights = [
@@ -66,20 +67,17 @@ export default function HomePage() {
 
   return (
     <div className="space-y-14">
-      <section className="bg-white border border-slate-200 rounded-2xl shadow-sm p-8 sm:p-10">
-        <p className="text-xs font-semibold tracking-wide text-blue-700 uppercase mb-3">Smart Campus Hub</p>
-        <h1 className="text-3xl sm:text-4xl font-semibold text-slate-900 leading-tight">
-          One portal for campus spaces, requests, and operations
-        </h1>
-        <p className="text-slate-500 mt-4 max-w-2xl">
-          Manage campus operations with a single system for facilities, booking requests, incident reporting, and
-          notification updates. Students and staff use the same platform with role-appropriate dashboards.
-        </p>
-        <div className="mt-8 flex flex-wrap gap-3">
-          <a
-            href={OAUTH_GOOGLE_URL}
-            className={`inline-flex py-2 px-4 text-sm ${PRIMARY_BUTTON_CLASS}`}
-          >
+      <PageHero
+        eyebrow="Smart Campus Hub"
+        title="One portal for campus spaces, requests, and operations"
+        description="Manage campus operations with a single system for facilities, booking requests, incident reporting, and notification updates. Students and staff use the same platform with role-appropriate dashboards."
+      />
+      <section className="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 sm:p-8">
+        <div className="flex flex-wrap items-center gap-4">
+          <p className="text-sm text-slate-600 max-w-xl">
+            Sign in with your campus Google account to access bookings, resources, and incident reporting.
+          </p>
+          <a href={OAUTH_GOOGLE_URL} className={`inline-flex py-2 px-4 text-sm ${PRIMARY_BUTTON_CLASS}`}>
             Sign in with Google
           </a>
         </div>
