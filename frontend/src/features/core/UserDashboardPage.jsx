@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { useEffect, useMemo, useState } from 'react'
 import api from './api'
 import { useAuth } from './AuthContext'
+import PageHero, { PageHeroMetric } from './PageHero'
 
 export default function UserDashboardPage() {
   const { user } = useAuth()
@@ -66,12 +67,20 @@ export default function UserDashboardPage() {
 
   return (
     <div className="space-y-6">
+      <PageHero
+        eyebrow="Enterprise Workspace"
+        title="Operations Dashboard"
+        description={`Welcome back, ${user?.name ?? 'user'}. Access your daily operations and track current activity.`}
+        aside={
+          <div className="flex flex-wrap justify-end gap-2">
+            <PageHeroMetric label="Bookings" value={bookingCount} />
+            <PageHeroMetric label="Open reports" value={reportCount} />
+            <PageHeroMetric label="Unread" value={unreadCount} />
+          </div>
+        }
+      />
       <section className="bg-white border border-slate-200 rounded-lg shadow-sm p-5">
-        <h1 className="text-2xl font-semibold text-slate-900">Operations Dashboard</h1>
-        <p className="text-slate-500 mt-1">
-          Welcome back, {user?.name ?? 'user'}. Access your daily operations and track current activity.
-        </p>
-        <div className="mt-4 flex flex-wrap gap-2 text-xs">
+        <div className="flex flex-wrap gap-2 text-xs">
           <span className="px-2 py-1 rounded-full bg-green-100 text-green-700 font-medium">Profile ready</span>
           <span className="px-2 py-1 rounded-full bg-slate-100 text-slate-700">Role: {user?.role ?? 'USER'}</span>
           <span className="px-2 py-1 rounded-full bg-slate-100 text-slate-700">

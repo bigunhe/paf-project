@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import api from './api'
 import { useAuth } from './AuthContext'
+import PageHero from './PageHero'
 import { PRIMARY_BUTTON_CLASS } from './ui'
 
 const FACULTIES = ['Computing', 'Business', 'Engineering']
@@ -69,12 +70,14 @@ export default function ProfileSetupPage() {
   }
 
   return (
-    <div className="max-w-lg mx-auto">
+    <div className="space-y-6">
+      <PageHero
+        eyebrow="Onboarding"
+        title="Complete your profile"
+        description="We need a few details for campus operations. You can continue to the app after this step."
+      />
+      <div className="max-w-lg mx-auto">
       <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-8">
-        <h1 className="text-xl font-semibold text-slate-900 mb-1">Complete your profile</h1>
-        <p className="text-slate-500 text-sm mb-6">
-          We need a few details for campus operations. You can continue to the app after this step.
-        </p>
 
         {error && (
           <div className="mb-4 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-3">{error}</div>
@@ -197,6 +200,7 @@ export default function ProfileSetupPage() {
             {submitting ? 'Saving…' : 'Save and continue'}
           </button>
         </form>
+      </div>
       </div>
     </div>
   )

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import api from './api'
+import PageHero, { PageHeroMetric } from './PageHero'
 
 export default function AdminDashboardPage() {
   const [metrics, setMetrics] = useState({
@@ -66,10 +67,12 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="space-y-6">
-      <section>
-        <h1 className="text-2xl font-semibold text-slate-900 mb-2">Admin operations dashboard</h1>
-        <p className="text-slate-500">Monitor service requests and manage campus operations from one view.</p>
-      </section>
+      <PageHero
+        eyebrow="Enterprise Workspace"
+        title="Admin operations dashboard"
+        description="Monitor service requests and manage campus operations from one view."
+        aside={<PageHeroMetric label="Pending bookings" value={metrics.pendingBookings} />}
+      />
 
       {error && <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-3">{error}</div>}
 

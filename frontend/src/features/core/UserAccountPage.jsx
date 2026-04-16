@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api from './api'
 import { useAuth } from './AuthContext'
+import PageHero from './PageHero'
 import { PRIMARY_BUTTON_CLASS } from './ui'
 
 export default function UserAccountPage() {
@@ -87,11 +88,13 @@ export default function UserAccountPage() {
   }
 
   return (
-    <div className="max-w-2xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold text-slate-900 mb-2">My Account</h1>
-        <p className="text-slate-500 text-sm">Manage your profile details and account lifecycle.</p>
-      </div>
+    <div className="space-y-6">
+      <PageHero
+        eyebrow="Enterprise Workspace"
+        title="My Account"
+        description="Manage your profile details and account lifecycle."
+      />
+      <div className="max-w-2xl space-y-6">
 
       {error && <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-3">{error}</div>}
       {success && (
@@ -245,6 +248,7 @@ export default function UserAccountPage() {
           {deleting ? 'Deleting…' : 'Delete profile'}
         </button>
       </section>
+      </div>
     </div>
   )
 }
