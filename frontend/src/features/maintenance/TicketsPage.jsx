@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import api from '../core/api'
 import { useAuth } from '../core/AuthContext'
+import { PRIMARY_BUTTON_CLASS } from '../core/ui'
 
 const PRIORITIES = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']
 const STATUSES = ['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED', 'REJECTED']
@@ -212,7 +213,7 @@ export default function TicketsPage() {
             className="text-sm text-slate-500"
           />
         </div>
-        <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-2 px-4 w-fit">
+        <button type="submit" className={`w-fit py-2 px-4 ${PRIMARY_BUTTON_CLASS}`}>
           Submit ticket
         </button>
       </form>
@@ -274,7 +275,7 @@ export default function TicketsPage() {
                     const name = prompt('Technician name')
                     if (name) patchAssignment(selected.id, name)
                   }}
-                  className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-1 px-2 text-xs"
+                  className={`py-1 px-2 text-xs ${PRIMARY_BUTTON_CLASS}`}
                 >
                   Assign tech
                 </button>
@@ -300,7 +301,7 @@ export default function TicketsPage() {
                 <button
                   type="button"
                   onClick={addComment}
-                  className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-2 px-3 text-sm"
+                  className={`py-2 px-3 text-sm ${PRIMARY_BUTTON_CLASS}`}
                 >
                   Post
                 </button>

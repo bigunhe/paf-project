@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { OAUTH_GOOGLE_URL } from './constants'
+import { PRIMARY_BUTTON_CLASS } from './ui'
 
 const highlights = [
   {
@@ -77,7 +78,7 @@ export default function HomePage() {
         <div className="mt-8 flex flex-wrap gap-3">
           <a
             href={OAUTH_GOOGLE_URL}
-            className="inline-flex bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-2 px-4 text-sm font-medium"
+            className={`inline-flex py-2 px-4 text-sm ${PRIMARY_BUTTON_CLASS}`}
           >
             Sign in with Google
           </a>

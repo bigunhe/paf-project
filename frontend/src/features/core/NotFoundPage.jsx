@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { PRIMARY_BUTTON_CLASS } from './ui'
 
 export default function NotFoundPage() {
   return (
@@ -10,7 +11,7 @@ export default function NotFoundPage() {
       <div className="flex flex-wrap gap-3">
         <Link
           to="/app"
-          className="inline-flex bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-2 px-4 text-sm font-medium"
+          className={`inline-flex py-2 px-4 text-sm ${PRIMARY_BUTTON_CLASS}`}
         >
           Student home
         </Link>

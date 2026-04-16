@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import api from '../core/api'
 import { useAuth } from '../core/AuthContext'
+import { PRIMARY_BUTTON_CLASS } from '../core/ui'
 
 const TYPES = ['ROOM', 'LAB', 'EQUIPMENT']
 const STATUSES = ['ACTIVE', 'OUT_OF_SERVICE']
@@ -381,7 +382,7 @@ export default function ResourceCatalogPage() {
           </div>
 
           <div className="flex flex-wrap gap-3">
-            <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-2 px-4 w-fit">
+            <button type="submit" className={`w-fit py-2 px-4 ${PRIMARY_BUTTON_CLASS}`}>
               {editingId ? 'Save changes' : 'Create resource'}
             </button>
             {editingId && (

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api from './api'
 import { useAuth } from './AuthContext'
+import { PRIMARY_BUTTON_CLASS } from './ui'
 
 export default function UserAccountPage() {
   const { user, refreshSession, logout } = useAuth()
@@ -131,7 +132,7 @@ export default function UserAccountPage() {
             <button
               type="button"
               onClick={() => setEditing(true)}
-              className="inline-flex bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-2 px-4 text-sm font-medium"
+              className={`inline-flex py-2 px-4 text-sm ${PRIMARY_BUTTON_CLASS}`}
             >
               Edit profile
             </button>
@@ -215,7 +216,7 @@ export default function UserAccountPage() {
             <button
               type="submit"
               disabled={saving}
-              className="inline-flex bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-2 px-4 text-sm font-medium disabled:opacity-50"
+              className={`inline-flex py-2 px-4 text-sm ${PRIMARY_BUTTON_CLASS} disabled:opacity-50`}
             >
               {saving ? 'Saving…' : 'Save changes'}
             </button>

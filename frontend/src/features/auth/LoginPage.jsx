@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../core/AuthContext'
 import { OAUTH_GOOGLE_URL } from '../core/constants'
+import { PRIMARY_BUTTON_CLASS } from '../core/ui'
 
 export default function LoginPage() {
   const navigate = useNavigate()
@@ -30,7 +31,7 @@ export default function LoginPage() {
       </p>
       <a
         href={OAUTH_GOOGLE_URL}
-        className="flex w-full justify-center py-2 px-4 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium"
+        className={`flex w-full justify-center py-2 px-4 text-sm ${PRIMARY_BUTTON_CLASS}`}
       >
         Continue with Google
       </a>

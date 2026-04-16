@@ -13,8 +13,9 @@ import { RequireAdmin, RequireAuth } from './RequireAuth'
 import LoginPage from '../auth/LoginPage'
 import AdminUsersPage from '../auth/AdminUsersPage'
 import ResourceCatalogPage from '../facilities/ResourceCatalogPage'
-import BookingsPage from '../bookings/BookingsPage'
 import TicketsPage from '../maintenance/TicketsPage'
+import MyBookings from '../../pages/MyBookings'
+import AdminBookings from '../../pages/AdminBookings'
 
 export default function App() {
   return (
@@ -36,7 +37,7 @@ export default function App() {
                 <Route path="app" element={<Outlet />}>
                   <Route index element={<UserDashboardPage />} />
                   <Route path="resources" element={<ResourceCatalogPage />} />
-                  <Route path="bookings" element={<BookingsPage />} />
+                  <Route path="bookings" element={<MyBookings />} />
                   <Route path="report" element={<TicketsPage />} />
                   <Route path="account" element={<UserAccountPage />} />
                   <Route path="*" element={<NotFoundPage />} />
@@ -45,7 +46,7 @@ export default function App() {
                 <Route path="admin" element={<RequireAdmin />}>
                   <Route index element={<AdminDashboardPage />} />
                   <Route path="resources" element={<ResourceCatalogPage />} />
-                  <Route path="bookings" element={<BookingsPage />} />
+                  <Route path="bookings" element={<AdminBookings />} />
                   <Route path="incidents" element={<TicketsPage />} />
                   <Route path="users" element={<AdminUsersPage />} />
                   <Route path="*" element={<NotFoundPage />} />

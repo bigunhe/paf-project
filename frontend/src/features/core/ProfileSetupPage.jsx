@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import api from './api'
 import { useAuth } from './AuthContext'
+import { PRIMARY_BUTTON_CLASS } from './ui'
 
 const FACULTIES = ['Computing', 'Business', 'Engineering']
 
@@ -191,7 +192,7 @@ export default function ProfileSetupPage() {
           <button
             type="submit"
             disabled={submitting || !userType}
-            className="w-full py-2.5 px-4 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-medium"
+            className={`w-full py-2.5 px-4 text-sm ${PRIMARY_BUTTON_CLASS}`}
           >
             {submitting ? 'Saving…' : 'Save and continue'}
           </button>
