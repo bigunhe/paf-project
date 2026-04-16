@@ -1,8 +1,8 @@
 /**
- * Shared primary UI tokens (booking-style cyan→blue gradient + navy filter chip).
- * Use sparingly for main CTAs and strong selected filter states only.
+ * Shared primary UI tokens — solid navy CTAs (aligned across features).
+ * Use for main buttons and strong selected filter states.
  */
 export const PRIMARY_BUTTON_CLASS =
-  'rounded-lg bg-gradient-to-r from-cyan-600 to-blue-600 text-white font-medium shadow-sm transition hover:from-cyan-500 hover:to-blue-500 disabled:opacity-60 disabled:cursor-not-allowed'
+  'rounded-lg bg-slate-900 text-white font-medium shadow-sm transition hover:bg-slate-800 disabled:opacity-60 disabled:cursor-not-allowed'
 
-export const PRIMARY_FILTER_ACTIVE_CLASS = 'bg-sky-900 text-white'
+export const PRIMARY_FILTER_ACTIVE_CLASS = 'bg-slate-900 text-white'
