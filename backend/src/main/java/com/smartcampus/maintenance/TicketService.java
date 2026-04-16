@@ -9,6 +9,7 @@ import com.smartcampus.maintenance.dto.TicketResponse;
 import com.smartcampus.maintenance.dto.TicketStatusPatchRequest;
 import com.smartcampus.maintenance.model.Ticket;
 import com.smartcampus.maintenance.model.TicketComment;
+import com.smartcampus.facilities.model.Resource;
 import com.smartcampus.maintenance.model.TicketStatus;
 import com.smartcampus.notifications.NotificationService;
 import java.time.LocalDateTime;
@@ -70,7 +71,14 @@ public class TicketService {
 				.comments(new ArrayList<>())
 				.createdAt(LocalDateTime.now())
 				.build();
-		return toResponse(ticketRepository.save(t));
+		Ticket saved = ticketRepository.save(t);
+		Resource res = resourceService.getEntityById(saved.getResourceId());
+		notificationService.notifyAdmins(
+				NotificationService.TYPE_TICKET_UPDATE,
+				"New ticket \"" + saved.getCategory() + "\" at " + res.getName() + ".",
+				"/admin/incidents",
+				saved.getId());
+		return toResponse(saved);
 	}
 
 	public TicketResponse patchStatus(String id, TicketStatusPatchRequest patch) {
@@ -85,7 +93,9 @@ public class TicketService {
 					t.getUserId(),
 					NotificationService.TYPE_TICKET_UPDATE,
 					"Ticket \"" + t.getCategory() + "\" status changed from "
-							+ previous + " to " + patch.status() + ".");
+							+ previous + " to " + patch.status() + ".",
+					"/app/report",
+					id);
 		}
 		return toResponse(saved);
 	}
@@ -95,7 +105,14 @@ public class TicketService {
 				.findById(id)
 				.orElseThrow(() -> new ResourceNotFoundException("Ticket not found: " + id));
 		t.setTechnicianAssigned(patch.technicianAssigned());
-		return toResponse(ticketRepository.save(t));
+		Ticket saved = ticketRepository.save(t);
+		notificationService.create(
+				saved.getUserId(),
+				NotificationService.TYPE_TICKET_UPDATE,
+				"Technician assigned on \"" + saved.getCategory() + "\": " + patch.technicianAssigned() + ".",
+				"/app/report",
+				id);
+		return toResponse(saved);
 	}
 
 	public TicketResponse addComment(String id, TicketCommentRequest req) {
@@ -112,7 +129,24 @@ public class TicketService {
 			t.setComments(new ArrayList<>());
 		}
 		t.getComments().add(c);
-		return toResponse(ticketRepository.save(t));
+		Ticket saved = ticketRepository.save(t);
+		String reporterId = saved.getUserId();
+		String commenterId = req.userId();
+		if (commenterId.equals(reporterId)) {
+			notificationService.notifyAdmins(
+					NotificationService.TYPE_TICKET_UPDATE,
+					"New reply on ticket \"" + saved.getCategory() + "\" from the reporter.",
+					"/admin/incidents",
+					id);
+		} else {
+			notificationService.create(
+					reporterId,
+					NotificationService.TYPE_TICKET_UPDATE,
+					"New comment on your ticket \"" + saved.getCategory() + "\".",
+					"/app/report",
+					id);
+		}
+		return toResponse(saved);
 	}
 
 	private TicketResponse toResponse(Ticket t) {

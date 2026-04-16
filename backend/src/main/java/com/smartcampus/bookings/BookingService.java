@@ -82,7 +82,15 @@ public class BookingService {
 				.adminReason(null)
 				.createdAt(LocalDateTime.now())
 				.build();
-		return toResponse(bookingRepository.save(b));
+		Booking saved = bookingRepository.save(b);
+		if (initialStatus == BookingStatus.PENDING) {
+			notificationService.notifyAdmins(
+					NotificationService.TYPE_BOOKING_UPDATE,
+					"New booking request from " + booker.getName() + " for " + resource.getName() + ".",
+					"/admin/bookings",
+					saved.getId());
+		}
+		return toResponse(saved);
 	}
 
 	public BookingResponse patchStatus(String id, BookingStatusPatchRequest patch) {
@@ -99,7 +107,9 @@ public class BookingService {
 			notificationService.create(
 					b.getUserId(),
 					NotificationService.TYPE_BOOKING_UPDATE,
-					"Your booking for " + r.getName() + " was APPROVED.");
+					"Your booking for " + r.getName() + " was APPROVED.",
+					"/app/bookings",
+					saved.getId());
 			return toResponse(saved);
 		}
 
@@ -112,7 +122,9 @@ public class BookingService {
 					b.getUserId(),
 					NotificationService.TYPE_BOOKING_UPDATE,
 					"Your booking for " + r.getName() + " was REJECTED."
-							+ (patch.adminReason() != null ? " Reason: " + patch.adminReason() : ""));
+							+ (patch.adminReason() != null ? " Reason: " + patch.adminReason() : ""),
+					"/app/bookings",
+					saved.getId());
 			return toResponse(saved);
 		}
 
