@@ -36,7 +36,7 @@ public class NotificationController {
 
 	@PatchMapping("/{id}/read")
 	@PreAuthorize("isAuthenticated()")
-	public NotificationResponse markRead(@PathVariable String id) {
-		return notificationService.markRead(id);
+	public NotificationResponse markRead(@PathVariable String id, @AuthenticationPrincipal JwtPrincipal principal) {
+		return notificationService.markRead(id, principal.getUserId());
 	}
 }
