@@ -1,4 +1,5 @@
 import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom'
+import { Toaster } from 'react-hot-toast'
 import { AuthProvider } from './AuthContext'
 import Layout from './Layout'
 import HomePage from './HomePage'
@@ -21,6 +22,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <Toaster position="top-right" toastOptions={{ duration: 3200 }} />
         <Routes>
           <Route path="/resources" element={<Navigate to="/app/resources" replace />} />
           <Route path="/bookings" element={<Navigate to="/app/bookings" replace />} />
