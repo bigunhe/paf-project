@@ -1,9 +1,8 @@
 package com.smartcampus.maintenance;
 
-import com.smartcampus.core.exception.ForbiddenException;
 import com.smartcampus.core.exception.ResourceNotFoundException;
 import com.smartcampus.facilities.ResourceService;
-import com.smartcampus.maintenance.dto.TicketAssignmentRequest;
+import com.smartcampus.maintenance.dto.TicketAssignmentPatchRequest;
 import com.smartcampus.maintenance.dto.TicketCommentRequest;
 import com.smartcampus.maintenance.dto.TicketRequest;
 import com.smartcampus.maintenance.dto.TicketResponse;
@@ -74,57 +73,12 @@ public class TicketService {
 		return toResponse(ticketRepository.save(t));
 	}
 
-	public TicketResponse updateTicket(String id, TicketRequest req, String userId, boolean isAdmin) {
-		Ticket t = ticketRepository
-				.findById(id)
-				.orElseThrow(() -> new ResourceNotFoundException("Ticket not found: " + id));
-
-		if (!t.getUserId().equals(userId) && !isAdmin) {
-			throw new ForbiddenException("Only the author or an admin can update this ticket.");
-		}
-
-		resourceService.getEntityById(req.resourceId());
-		t.setResourceId(req.resourceId());
-		t.setCategory(req.category());
-		t.setDescription(req.description());
-		t.setPriority(req.priority());
-		t.setContactDetails(req.contactDetails());
-
-		List<String> images = req.imageAttachments() != null ? new ArrayList<>(req.imageAttachments()) : new ArrayList<>();
-		if (images.size() > MAX_IMAGES) {
-			throw new IllegalArgumentException("At most " + MAX_IMAGES + " image attachments allowed");
-		}
-		t.setImageAttachments(images);
-
-		return toResponse(ticketRepository.save(t));
-	}
-
-	public void deleteTicket(String id, String userId, boolean isAdmin) {
-		Ticket t = ticketRepository
-				.findById(id)
-				.orElseThrow(() -> new ResourceNotFoundException("Ticket not found: " + id));
-
-		if (!t.getUserId().equals(userId) && !isAdmin) {
-			throw new ForbiddenException("Only the author or an admin can delete this ticket.");
-		}
-
-		ticketRepository.delete(t);
-	}
-
-	public TicketResponse patchStatus(String id, TicketStatusPatchRequest patch, boolean isAdmin) {
-		if (!isAdmin) {
-			throw new ForbiddenException("Only admins or technicians can change the status.");
-		}
+	public TicketResponse patchStatus(String id, TicketStatusPatchRequest patch) {
 		Ticket t = ticketRepository
 				.findById(id)
 				.orElseThrow(() -> new ResourceNotFoundException("Ticket not found: " + id));
 		TicketStatus previous = t.getStatus();
 		t.setStatus(patch.status());
-		
-		if (patch.resolutionNotes() != null && !patch.resolutionNotes().isBlank()) {
-			t.setResolutionNotes(patch.resolutionNotes());
-		}
-
 		Ticket saved = ticketRepository.save(t);
 		if (previous != patch.status()) {
 			notificationService.create(
@@ -136,10 +90,7 @@ public class TicketService {
 		return toResponse(saved);
 	}
 
-	public TicketResponse assignTechnician(String id, TicketAssignmentRequest patch, boolean isAdmin) {
-		if (!isAdmin) {
-			throw new ForbiddenException("Only admins can assign technicians.");
-		}
+	public TicketResponse patchAssignment(String id, TicketAssignmentPatchRequest patch) {
 		Ticket t = ticketRepository
 				.findById(id)
 				.orElseThrow(() -> new ResourceNotFoundException("Ticket not found: " + id));
@@ -161,50 +112,6 @@ public class TicketService {
 			t.setComments(new ArrayList<>());
 		}
 		t.getComments().add(c);
-		return toResponse(ticketRepository.save(t));
-	}
-
-	public TicketResponse updateComment(String id, String commentId, TicketCommentRequest req, boolean isAdmin) {
-		Ticket t = ticketRepository
-				.findById(id)
-				.orElseThrow(() -> new ResourceNotFoundException("Ticket not found: " + id));
-		
-		if (t.getComments() == null) {
-			throw new ResourceNotFoundException("Comment not found: " + commentId);
-		}
-		
-		TicketComment comment = t.getComments().stream()
-				.filter(c -> c.getCommentId().equals(commentId))
-				.findFirst()
-				.orElseThrow(() -> new ResourceNotFoundException("Comment not found: " + commentId));
-				
-		if (!comment.getUserId().equals(req.userId()) && !isAdmin) {
-			throw new ForbiddenException("You do not have permission to edit this comment.");
-		}
-		
-		comment.setContent(req.content());
-		return toResponse(ticketRepository.save(t));
-	}
-
-	public TicketResponse deleteComment(String id, String commentId, String requestUserId, boolean isAdmin) {
-		Ticket t = ticketRepository
-				.findById(id)
-				.orElseThrow(() -> new ResourceNotFoundException("Ticket not found: " + id));
-
-		if (t.getComments() == null) {
-			throw new ResourceNotFoundException("Comment not found: " + commentId);
-		}
-
-		TicketComment comment = t.getComments().stream()
-				.filter(c -> c.getCommentId().equals(commentId))
-				.findFirst()
-				.orElseThrow(() -> new ResourceNotFoundException("Comment not found: " + commentId));
-
-		if (!comment.getUserId().equals(requestUserId) && !isAdmin) {
-			throw new ForbiddenException("You do not have permission to delete this comment.");
-		}
-
-		t.getComments().remove(comment);
 		return toResponse(ticketRepository.save(t));
 	}
 

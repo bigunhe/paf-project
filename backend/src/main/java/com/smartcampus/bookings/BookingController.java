@@ -1,11 +1,15 @@
 package com.smartcampus.bookings;
 
+import com.smartcampus.auth.model.RoleType;
+import com.smartcampus.auth.security.JwtPrincipal;
 import com.smartcampus.bookings.dto.BookingRequest;
 import com.smartcampus.bookings.dto.BookingResponse;
 import com.smartcampus.bookings.dto.BookingStatusPatchRequest;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -27,17 +31,36 @@ public class BookingController {
 	}
 
 	@GetMapping
-	public List<BookingResponse> list(@RequestParam(required = false) String userId) {
+	@PreAuthorize("isAuthenticated()")
+	public List<BookingResponse> list(
+			@RequestParam(required = false) String userId, @AuthenticationPrincipal JwtPrincipal principal) {
+		if (principal.getRole() != RoleType.ADMIN) {
+			userId = principal.getUserId();
+		}
 		return bookingService.list(userId);
 	}
 
 	@PostMapping
+	@PreAuthorize("isAuthenticated()")
 	@ResponseStatus(HttpStatus.CREATED)
-	public BookingResponse create(@Valid @RequestBody BookingRequest request) {
-		return bookingService.create(request);
+	public BookingResponse create(
+			@Valid @RequestBody BookingRequest request, @AuthenticationPrincipal JwtPrincipal principal) {
+		String userId = request.userId();
+		if (principal.getRole() != RoleType.ADMIN) {
+			userId = principal.getUserId();
+		}
+		BookingRequest effective = new BookingRequest(
+				request.resourceId(),
+				userId,
+				request.startTime(),
+				request.endTime(),
+				request.purpose(),
+				request.expectedAttendees());
+		return bookingService.create(effective);
 	}
 
 	@PatchMapping("/{id}/status")
+	@PreAuthorize("hasRole('ADMIN')")
 	public BookingResponse patchStatus(
 			@PathVariable String id, @Valid @RequestBody BookingStatusPatchRequest body) {
 		return bookingService.patchStatus(id, body);

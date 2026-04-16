@@ -1,19 +1,44 @@
+import { useEffect } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { useAuth } from '../core/AuthContext'
+import { OAUTH_GOOGLE_URL } from '../core/constants'
+import { PRIMARY_BUTTON_CLASS } from '../core/ui'
+
 export default function LoginPage() {
+  const navigate = useNavigate()
+  const { user, loading } = useAuth()
+
+  useEffect(() => {
+    if (!loading && user) {
+      if (user.profileCompleted !== true) {
+        navigate('/complete-profile', { replace: true })
+      } else {
+        navigate(user.role === 'ADMIN' ? '/admin' : '/app', { replace: true })
+      }
+    }
+  }, [user, loading, navigate])
+
+  if (!loading && user) {
+    return null
+  }
+
   return (
     <div className="max-w-md mx-auto bg-white border border-slate-200 rounded-lg shadow-sm p-8">
       <h1 className="text-xl font-semibold text-slate-900 mb-2">Sign in</h1>
       <p className="text-slate-500 text-sm mb-6">
-        Google OAuth 2.0 will be integrated here. For development, use the header checkbox
-        <strong className="text-slate-700"> Staff portal</strong> to switch to{' '}
-        <code className="text-xs bg-slate-100 px-1 rounded">/admin</code> and seeded users in the API.
+        Use your campus Google account. After OAuth completes, we load your profile from the database and send you to the
+        student or staff dashboard based on your role.
       </p>
-      <button
-        type="button"
-        disabled
-        className="w-full py-2 px-4 rounded-lg bg-blue-600 text-white opacity-60 cursor-not-allowed"
+      <a
+        href={OAUTH_GOOGLE_URL}
+        className={`flex w-full justify-center py-2 px-4 text-sm ${PRIMARY_BUTTON_CLASS}`}
       >
-        Continue with Google (coming soon)
-      </button>
+        Continue with Google
+      </a>
+
+      <Link to="/" className="mt-6 inline-flex text-sm text-blue-600 hover:underline">
+        Back to home
+      </Link>
     </div>
   )
 }
