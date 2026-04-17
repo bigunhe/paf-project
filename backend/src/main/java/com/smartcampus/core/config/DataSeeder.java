@@ -19,11 +19,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
+import org.springframework.core.annotation.Order;
+
 /**
  * Seeds fixed IDs matching frontend dev constants (see frontend/src/features/core/constants.js).
  */
 @Component
 @Profile("local")
+@Order(2)
 public class DataSeeder implements ApplicationRunner {
 
 	public static final String DEV_USER_ID = "64a1b9d0b2fc8e4b9a000001";
@@ -94,6 +97,22 @@ public class DataSeeder implements ApplicationRunner {
 				"Media Store, Block A", "Mon-Sat 09:00-17:00", ResourceStatus.ACTIVE);
 		seedResource(RESOURCE_CAMERA_ID, "Conference Camera Kit", ResourceType.EQUIPMENT, 1,
 				"Media Store, Block A", "Mon-Fri 09:00-17:00", ResourceStatus.OUT_OF_SERVICE);
+
+		// Added explicit lecture halls across buildings
+		seedResource(new org.bson.types.ObjectId().toHexString(), "Lecture Hall A1", ResourceType.LECTURE_HALL, 120, "Block A, 1st Floor",
+				"Mon-Fri 08:00-18:00", ResourceStatus.ACTIVE);
+		seedResource(new org.bson.types.ObjectId().toHexString(), "Lecture Hall A2", ResourceType.LECTURE_HALL, 120, "Block A, 1st Floor",
+				"Mon-Fri 08:00-18:00", ResourceStatus.ACTIVE);
+		seedResource(new org.bson.types.ObjectId().toHexString(), "Lecture Hall B1", ResourceType.LECTURE_HALL, 150, "Block B, Ground Floor",
+				"Mon-Fri 08:00-18:00", ResourceStatus.ACTIVE);
+		seedResource(new org.bson.types.ObjectId().toHexString(), "Lecture Hall B2", ResourceType.LECTURE_HALL, 80, "Block B, 2nd Floor",
+				"Mon-Fri 08:00-18:00", ResourceStatus.ACTIVE);
+		seedResource(new org.bson.types.ObjectId().toHexString(), "Engineering Lab 1", ResourceType.LAB, 50, "Engineering Block, Ground Floor",
+				"Mon-Fri 08:00-20:00", ResourceStatus.ACTIVE);
+		seedResource(new org.bson.types.ObjectId().toHexString(), "Network Lab", ResourceType.LAB, 40, "Block C, 3rd Floor",
+				"Mon-Fri 08:00-20:00", ResourceStatus.ACTIVE);
+		seedResource(new org.bson.types.ObjectId().toHexString(), "Library East Wing", ResourceType.ROOM, 200, "Library, 1st Floor",
+				"Mon-Sun 07:00-22:00", ResourceStatus.ACTIVE);
 
 		ensureConfiguredAdminsExist();
 		if (resetRolesOnStartup) {

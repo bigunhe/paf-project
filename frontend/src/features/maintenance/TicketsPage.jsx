@@ -63,7 +63,8 @@ export default function TicketsPage() {
     setResources(r)
 
     if (r.length > 0) {
-      setSelectedBuilding((prev) => prev || r[0].name)
+      const buildings = Array.from(new Set(r.map((res) => res.location.split(',')[0].trim())))
+      setSelectedBuilding((prev) => prev || buildings[0])
       setForm((f) => (f.resourceId ? f : { ...f, resourceId: r[0].id }))
     }
   }
@@ -185,8 +186,8 @@ export default function TicketsPage() {
     }
   }
 
-  const buildingNames = Array.from(new Set(resources.map((r) => r.name)))
-  const roomsInBuilding = resources.filter((r) => r.name === selectedBuilding)
+  const buildingNames = Array.from(new Set(resources.map((r) => r.location.split(',')[0].trim())))
+  const roomsInBuilding = resources.filter((r) => r.location.split(',')[0].trim() === selectedBuilding)
 
   const openTicketCount = tickets.filter((t) => t.status !== 'RESOLVED' && t.status !== 'CLOSED').length
 
@@ -232,7 +233,7 @@ export default function TicketsPage() {
                 onChange={(e) => {
                   const newB = e.target.value
                   setSelectedBuilding(newB)
-                  const matching = resources.filter((r) => r.name === newB)
+                  const matching = resources.filter((r) => r.location.split(',')[0].trim() === newB)
                   if (matching.length > 0) setForm((f) => ({ ...f, resourceId: matching[0].id }))
                 }}
                 className="border border-slate-200 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none transition-all bg-slate-50 text-slate-900"
@@ -253,7 +254,7 @@ export default function TicketsPage() {
               >
                 {roomsInBuilding.map((r) => (
                   <option key={r.id} value={r.id}>
-                    {r.location} ({r.type})
+                    {r.name} ({r.type})
                   </option>
                 ))}
               </select>

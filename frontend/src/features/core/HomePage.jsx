@@ -75,11 +75,11 @@ export default function HomePage() {
       <section className="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 sm:p-8">
         <div className="flex flex-wrap items-center gap-4">
           <p className="text-sm text-slate-600 max-w-xl">
-            Sign in with your campus Google account to access bookings, resources, and incident reporting.
+            Sign in with your campus Google account or a local development account to access bookings, resources, and incident reporting.
           </p>
-          <a href={OAUTH_GOOGLE_URL} className={`inline-flex py-2 px-4 text-sm ${PRIMARY_BUTTON_CLASS}`}>
-            Sign in with Google
-          </a>
+          <Link to="/login" className={`inline-flex py-2 px-4 text-sm ${PRIMARY_BUTTON_CLASS}`}>
+            Sign in
+          </Link>
         </div>
       </section>
 
