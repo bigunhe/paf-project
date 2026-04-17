@@ -29,7 +29,7 @@ public class DevAuthController {
 	}
 
 	@GetMapping("/dev-login")
-	public AuthTokenResponse devLogin(@RequestParam(defaultValue = "user") String as) {
+	public AuthTokenResponse devLogin(@RequestParam(defaultValue = "user") String as, @RequestParam(required = false) String expectedRole) {
 		User u;
 		if ("admin".equalsIgnoreCase(as)) {
 			u = userRepository.findAll().stream()
@@ -41,6 +41,11 @@ public class DevAuthController {
 			u = userRepository.findById(DataSeeder.DEV_USER_ID)
 					.orElseThrow(() -> new IllegalStateException("Seeded user missing: " + DataSeeder.DEV_USER_ID));
 		}
+		
+		if (expectedRole != null && !u.getRole().name().equalsIgnoreCase(expectedRole)) {
+			throw new com.smartcampus.core.exception.ForbiddenException("Access Denied: Your account role (" + u.getRole().name() + ") does not match the requested login type.");
+		}
+
 		return new AuthTokenResponse(jwtService.createAccessToken(u));
 	}
 }

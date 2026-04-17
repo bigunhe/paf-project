@@ -7,6 +7,7 @@ import com.smartcampus.maintenance.dto.TicketCommentRequest;
 import com.smartcampus.maintenance.dto.TicketRequest;
 import com.smartcampus.maintenance.dto.TicketResponse;
 import com.smartcampus.maintenance.dto.TicketStatusPatchRequest;
+import com.smartcampus.maintenance.dto.TicketUpdateRequest;
 import com.smartcampus.maintenance.model.Ticket;
 import com.smartcampus.maintenance.model.TicketComment;
 import com.smartcampus.facilities.model.Resource;
@@ -34,6 +35,36 @@ public class TicketService {
 		this.ticketRepository = ticketRepository;
 		this.resourceService = resourceService;
 		this.notificationService = notificationService;
+	}
+
+	public TicketResponse update(String id, String requestUserId, boolean isAdmin, TicketUpdateRequest patch) {
+		Ticket t = ticketRepository.findById(id)
+				.orElseThrow(() -> new ResourceNotFoundException("Ticket not found: " + id));
+
+		if (!isAdmin && !t.getUserId().equals(requestUserId)) {
+			throw new com.smartcampus.core.exception.ForbiddenException("You do not have permission to edit this ticket.");
+		}
+		if (t.getStatus() == TicketStatus.RESOLVED || t.getStatus() == TicketStatus.CLOSED) {
+			throw new IllegalStateException("Cannot modify a finalized (RESOLVED or CLOSED) ticket.");
+		}
+
+		t.setCategory(patch.category());
+		t.setDescription(patch.description());
+		t.setPriority(patch.priority());
+		t.setContactDetails(patch.contactDetails());
+
+		return toResponse(ticketRepository.save(t));
+	}
+
+	public void delete(String id, String requestUserId, boolean isAdmin) {
+		Ticket t = ticketRepository.findById(id)
+				.orElseThrow(() -> new ResourceNotFoundException("Ticket not found: " + id));
+
+		if (!isAdmin && !t.getUserId().equals(requestUserId)) {
+			throw new com.smartcampus.core.exception.ForbiddenException("You do not have permission to delete this ticket.");
+		}
+
+		ticketRepository.delete(t);
 	}
 
 	public List<TicketResponse> list(String userId) {

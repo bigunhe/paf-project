@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.beans.factory.annotation.Value;
@@ -39,16 +40,19 @@ public class DataSeeder implements ApplicationRunner {
 
 	private final UserRepository userRepository;
 	private final ResourceRepository resourceRepository;
+	private final PasswordEncoder passwordEncoder;
 	private final boolean resetRolesOnStartup;
 	private final Set<String> adminEmails;
 
 	public DataSeeder(
 			UserRepository userRepository,
 			ResourceRepository resourceRepository,
+			PasswordEncoder passwordEncoder,
 			@Value("${app.auth.reset-roles-on-startup:true}") boolean resetRolesOnStartup,
 			@Value("${app.auth.admin-emails:admin.itpm@gmail.com}") String adminEmailsCsv) {
 		this.userRepository = userRepository;
 		this.resourceRepository = resourceRepository;
+		this.passwordEncoder = passwordEncoder;
 		this.resetRolesOnStartup = resetRolesOnStartup;
 		this.adminEmails = Arrays.stream(adminEmailsCsv.split(","))
 				.map(v -> v == null ? "" : v.trim().toLowerCase(Locale.ROOT))
@@ -62,6 +66,7 @@ public class DataSeeder implements ApplicationRunner {
 			userRepository.save(User.builder()
 					.id(DEV_USER_ID)
 					.email("student@my.sliit.lk")
+					.password(passwordEncoder.encode("student123"))
 					.name("Student User")
 					.role(RoleType.USER)
 					.oauthProviderId("dev-user")
@@ -76,6 +81,7 @@ public class DataSeeder implements ApplicationRunner {
 			userRepository.save(User.builder()
 					.id(DEV_ADMIN_ID)
 					.email("dev-admin@smartcampus.local")
+					.password(passwordEncoder.encode("admin123"))
 					.name("Dev Admin User")
 					.role(RoleType.USER)
 					.oauthProviderId("dev-admin")
@@ -141,6 +147,7 @@ public class DataSeeder implements ApplicationRunner {
 			if (!exists) {
 				userRepository.save(User.builder()
 						.email(adminEmail)
+						.password(passwordEncoder.encode("admin123"))
 						.name("Admin User")
 						.role(RoleType.ADMIN)
 						.oauthProviderId(null)
