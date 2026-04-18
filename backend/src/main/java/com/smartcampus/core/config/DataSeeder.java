@@ -88,8 +88,8 @@ public class DataSeeder implements ApplicationRunner {
 					.userType(UserType.STAFF)
 					.profileCompleted(true)
 					.contactNumber("0000000001")
-					.universityId("STAFF-DEV-01")
-					.academicUnit("Operations")
+					.universityId("STF000001")
+					.academicUnit("Computing")
 					.build());
 		}
 
@@ -142,6 +142,7 @@ public class DataSeeder implements ApplicationRunner {
 	}
 
 	private void ensureConfiguredAdminsExist() {
+		int staffIdSeq = 10;
 		for (String adminEmail : adminEmails) {
 			boolean exists = userRepository.findByEmailIgnoreCase(adminEmail).isPresent();
 			if (!exists) {
@@ -154,8 +155,8 @@ public class DataSeeder implements ApplicationRunner {
 						.userType(UserType.STAFF)
 						.profileCompleted(true)
 						.contactNumber("0000000002")
-						.universityId("admin-" + adminEmail.replace('@', '-'))
-						.academicUnit("Administration")
+						.universityId(String.format("STF%06d", staffIdSeq++))
+						.academicUnit("Computing")
 						.build());
 			}
 		}
