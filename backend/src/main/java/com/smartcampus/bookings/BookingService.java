@@ -53,6 +53,7 @@ public class BookingService {
 		if (!req.startTime().isBefore(req.endTime())) {
 			throw new IllegalArgumentException("startTime must be before endTime");
 		}
+		assertSlotNotInPast(req.startTime(), req.endTime());
 		User booker = userService.getEntityById(req.userId());
 		if (!Boolean.TRUE.equals(booker.getProfileCompleted())) {
 			throw new ResponseStatusException(
@@ -154,6 +155,7 @@ public class BookingService {
 		if (!request.startTime().isBefore(request.endTime())) {
 			throw new IllegalArgumentException("startTime must be before endTime");
 		}
+		assertSlotNotInPast(request.startTime(), request.endTime());
 
 		Resource resource = resourceService.getEntityById(request.resourceId());
 		if (resource.getStatus() != ResourceStatus.ACTIVE) {
@@ -210,6 +212,16 @@ public class BookingService {
 		}
 
 		bookingRepository.deleteById(id);
+	}
+
+	private static void assertSlotNotInPast(LocalDateTime start, LocalDateTime end) {
+		LocalDateTime now = LocalDateTime.now();
+		if (!start.isAfter(now)) {
+			throw new IllegalArgumentException("Booking start time must be in the future");
+		}
+		if (!end.isAfter(now)) {
+			throw new IllegalArgumentException("Booking end time must be in the future");
+		}
 	}
 
 	private void assertNoOverlap(
