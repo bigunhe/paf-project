@@ -7,6 +7,7 @@ import com.smartcampus.maintenance.dto.TicketCommentRequest;
 import com.smartcampus.maintenance.dto.TicketRequest;
 import com.smartcampus.maintenance.dto.TicketResponse;
 import com.smartcampus.maintenance.dto.TicketStatusPatchRequest;
+import com.smartcampus.maintenance.dto.TicketUpdateRequest;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;
@@ -16,6 +17,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -75,5 +78,21 @@ public class TicketController {
 	public TicketResponse addComment(
 			@PathVariable String id, @Valid @RequestBody TicketCommentRequest body) {
 		return ticketService.addComment(id, body);
+	}
+
+	@PutMapping("/{id}")
+	@PreAuthorize("isAuthenticated()")
+	public TicketResponse updateTicket(
+			@PathVariable String id,
+			@AuthenticationPrincipal JwtPrincipal principal,
+			@Valid @RequestBody TicketUpdateRequest request) {
+		return ticketService.update(id, principal.getUserId(), principal.getRole() == RoleType.ADMIN, request);
+	}
+
+	@DeleteMapping("/{id}")
+	@PreAuthorize("isAuthenticated()")
+	@ResponseStatus(HttpStatus.NO_CONTENT)
+	public void deleteTicket(@PathVariable String id, @AuthenticationPrincipal JwtPrincipal principal) {
+		ticketService.delete(id, principal.getUserId(), principal.getRole() == RoleType.ADMIN);
 	}
 }

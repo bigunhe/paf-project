@@ -13,6 +13,9 @@ import {
   MousePointerClick,
   UserCog,
   Wrench,
+  Trash2,
+  Edit2,
+  X,
 } from 'lucide-react'
 
 const CATEGORIES = ['Electrical', 'Network', 'Hardware']
@@ -39,6 +42,8 @@ export default function TicketsPage() {
   const [resources, setResources] = useState([])
   const [selected, setSelected] = useState(null)
   const [commentText, setCommentText] = useState('')
+  const [isEditing, setIsEditing] = useState(false)
+  const [editForm, setEditForm] = useState({})
 
   const [techText, setTechText] = useState('')
   const [selectedBuilding, setSelectedBuilding] = useState('')
@@ -63,7 +68,8 @@ export default function TicketsPage() {
     setResources(r)
 
     if (r.length > 0) {
-      setSelectedBuilding((prev) => prev || r[0].name)
+      const buildings = Array.from(new Set(r.map((res) => res.location.split(',')[0].trim())))
+      setSelectedBuilding((prev) => prev || buildings[0])
       setForm((f) => (f.resourceId ? f : { ...f, resourceId: r[0].id }))
     }
   }
@@ -123,6 +129,42 @@ export default function TicketsPage() {
       const { data } = await api.get(`/tickets/${id}`)
       setSelected(data)
       setCommentText('')
+      setIsEditing(false)
+      setEditForm({
+        category: data.category,
+        description: data.description,
+        priority: data.priority,
+        contactDetails: data.contactDetails
+      })
+    } catch (err) {
+      setError(err.response?.data?.message || err.message)
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!window.confirm("Are you sure you want to delete this ticket? This cannot be undone.")) return
+    try {
+      await api.delete(`/tickets/${selected.id}`)
+      toast.success("Ticket deleted")
+      setSelected(null)
+      await load()
+    } catch (err) {
+      setError(err.response?.data?.message || err.message)
+    }
+  }
+
+  const handleUpdate = async (e) => {
+    e.preventDefault()
+    try {
+      if (editForm.contactDetails?.length !== 10) {
+        setError("Contact number must be exactly 10 digits")
+        return
+      }
+      await api.put(`/tickets/${selected.id}`, editForm)
+      toast.success("Ticket updated successfully")
+      setIsEditing(false)
+      await openDetail(selected.id)
+      await load()
     } catch (err) {
       setError(err.response?.data?.message || err.message)
     }
@@ -185,8 +227,8 @@ export default function TicketsPage() {
     }
   }
 
-  const buildingNames = Array.from(new Set(resources.map((r) => r.name)))
-  const roomsInBuilding = resources.filter((r) => r.name === selectedBuilding)
+  const buildingNames = Array.from(new Set(resources.map((r) => r.location.split(',')[0].trim())))
+  const roomsInBuilding = resources.filter((r) => r.location.split(',')[0].trim() === selectedBuilding)
 
   const openTicketCount = tickets.filter((t) => t.status !== 'RESOLVED' && t.status !== 'CLOSED').length
 
@@ -232,7 +274,7 @@ export default function TicketsPage() {
                 onChange={(e) => {
                   const newB = e.target.value
                   setSelectedBuilding(newB)
-                  const matching = resources.filter((r) => r.name === newB)
+                  const matching = resources.filter((r) => r.location.split(',')[0].trim() === newB)
                   if (matching.length > 0) setForm((f) => ({ ...f, resourceId: matching[0].id }))
                 }}
                 className="border border-slate-200 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none transition-all bg-slate-50 text-slate-900"
@@ -253,7 +295,7 @@ export default function TicketsPage() {
               >
                 {roomsInBuilding.map((r) => (
                   <option key={r.id} value={r.id}>
-                    {r.location} ({r.type})
+                    {r.name} ({r.type})
                   </option>
                 ))}
               </select>
@@ -421,30 +463,124 @@ export default function TicketsPage() {
         {selected ? (
           <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
             <div className="p-6 border-b border-slate-100 space-y-4 bg-slate-50/30">
-              <div className="flex justify-between items-start gap-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3">
-                    <h3 className="text-xl font-bold text-slate-900">{selected.category}</h3>
-                  </div>
-                  <p className="text-slate-500 text-sm mt-1 whitespace-pre-wrap">{selected.description}</p>
-
-                  {selected.imageAttachments?.length > 0 && (
-                    <div className="flex flex-wrap gap-3 mt-4">
-                      {selected.imageAttachments.map((img, i) => (
-                        <img
-                          key={i}
-                          src={img}
-                          alt={`Attachment ${i + 1}`}
-                          className="h-24 w-auto rounded border border-slate-200 object-cover shadow-sm bg-white"
-                        />
-                      ))}
-                    </div>
-                  )}
-                </div>
-                <span className="px-3 py-1 bg-slate-100 text-slate-700 rounded-full text-xs font-bold tracking-wide uppercase whitespace-nowrap">
+              
+              <div className="flex justify-between items-start gap-4 mb-2">
+                <span className={`px-3 py-1 rounded-full text-xs font-bold tracking-wide uppercase whitespace-nowrap ${
+                    selected.status === 'RESOLVED' || selected.status === 'CLOSED'
+                      ? 'bg-slate-200 text-slate-700'
+                      : 'bg-emerald-100 text-emerald-800'
+                  }`}>
                   {selected.status}
                 </span>
+
+                <div className="flex items-center gap-2">
+                  {!isEditing && (isAdmin || selected.userId === currentUserId) && selected.status !== 'RESOLVED' && selected.status !== 'CLOSED' && (
+                    <button
+                      onClick={() => setIsEditing(true)}
+                      className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors border border-transparent hover:border-blue-200"
+                      title="Edit Ticket"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                  )}
+                  {!isEditing && (isAdmin || selected.userId === currentUserId) && (
+                    <button
+                      onClick={handleDelete}
+                      className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-200"
+                      title="Delete Ticket"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
               </div>
+
+              {isEditing ? (
+                <form onSubmit={handleUpdate} className="bg-white p-5 rounded-xl border border-blue-100 shadow-sm space-y-4">
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-xs font-semibold uppercase text-slate-500 tracking-wider">Category</label>
+                      <select
+                        required
+                        value={editForm.category}
+                        onChange={e => setEditForm(f => ({ ...f, category: e.target.value }))}
+                        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                      >
+                        {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                      </select>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-semibold uppercase text-slate-500 tracking-wider">Priority</label>
+                      <select
+                        required
+                        value={editForm.priority}
+                        onChange={e => setEditForm(f => ({ ...f, priority: e.target.value }))}
+                        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                      >
+                        {PRIORITIES.map(p => <option key={p} value={p}>{p}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold uppercase text-slate-500 tracking-wider">Description</label>
+                    <textarea
+                      required
+                      rows={3}
+                      value={editForm.description}
+                      onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))}
+                      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none resize-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1 w-full md:w-1/2">
+                    <label className="text-xs font-semibold uppercase text-slate-500 tracking-wider">Contact Number</label>
+                    <input
+                      required
+                      type="text"
+                      maxLength={10}
+                      value={editForm.contactDetails || ''}
+                      onChange={e => setEditForm(f => ({ ...f, contactDetails: digitsOnlyContact(e.target.value) }))}
+                      className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                    />
+                  </div>
+
+                  <div className="flex gap-2 pt-2 border-t border-slate-100">
+                    <button type="submit" className={`px-4 py-2 text-sm shadow-sm ${PRIMARY_BUTTON_CLASS}`}>
+                      Save Changes
+                    </button>
+                    <button 
+                      type="button" 
+                      onClick={() => setIsEditing(false)}
+                      className="px-4 py-2 text-sm text-slate-600 bg-slate-100 hover:bg-slate-200 rounded shadow-sm font-medium transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <div className="flex justify-between items-start gap-4">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3">
+                      <h3 className="text-xl font-bold text-slate-900">{selected.category}</h3>
+                    </div>
+                    <p className="text-slate-500 text-sm mt-1 whitespace-pre-wrap">{selected.description}</p>
+
+                    {selected.imageAttachments?.length > 0 && (
+                      <div className="flex flex-wrap gap-3 mt-4">
+                        {selected.imageAttachments.map((img, i) => (
+                          <img
+                            key={i}
+                            src={img}
+                            alt={`Attachment ${i + 1}`}
+                            className="h-24 w-auto rounded border border-slate-200 object-cover shadow-sm bg-white"
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {(selected.technicianAssigned || selected.resolutionNotes) && (
                 <div className="bg-blue-50/50 p-4 rounded-lg border border-blue-100 grid md:grid-cols-2 gap-4">
