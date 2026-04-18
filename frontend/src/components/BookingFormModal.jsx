@@ -45,9 +45,22 @@ function buildTimeOptions(intervalMinutes = 30, startHour = 7, endHour = 22) {
   return options
 }
 
+function toDateTime(dateValue, timeValue) {
+  if (!dateValue || !timeValue) return null
+  const date = new Date(`${dateValue}T${timeValue}`)
+  if (Number.isNaN(date.getTime())) return null
+  return date
+}
+
+function isOverlapping(startA, endA, startB, endB) {
+  return startA < endB && startB < endA
+}
+
 export default function BookingFormModal({
   isOpen,
   resources,
+  existingBookings = [],
+  editingBookingId = null,
   resourcesLoading = false,
   resourcesError = '',
   submitting,
@@ -105,8 +118,8 @@ export default function BookingFormModal({
     if (!isOpen || resources.length === 0) return
 
     const exists = resources.some((resource) => resource.id === form.resourceId)
-    if (!form.resourceId || !exists) {
-      setForm((prev) => ({ ...prev, resourceId: resources[0].id }))
+    if (form.resourceId && !exists) {
+      setForm((prev) => ({ ...prev, resourceId: '' }))
     }
   }, [isOpen, resources, form.resourceId])
 
@@ -137,6 +150,46 @@ export default function BookingFormModal({
     }
     return options
   }, [form.startTime, form.endTime])
+
+  const conflictMessage = useMemo(() => {
+    if (!form.resourceId || !form.date || !form.startTime || !form.endTime) return ''
+
+    const requestedStart = toDateTime(form.date, form.startTime)
+    const requestedEnd = toDateTime(form.date, form.endTime)
+    if (!requestedStart || !requestedEnd || requestedStart >= requestedEnd) return ''
+
+    const conflictingBooking = existingBookings.find((booking) => {
+      if (!booking || booking.id === editingBookingId) return false
+      if (booking.resourceId !== form.resourceId) return false
+      if (booking.status === 'REJECTED' || booking.status === 'CANCELLED') return false
+
+      const bookingStart = new Date(booking.startTime)
+      const bookingEnd = new Date(booking.endTime)
+      if (Number.isNaN(bookingStart.getTime()) || Number.isNaN(bookingEnd.getTime())) return false
+
+      return isOverlapping(requestedStart, requestedEnd, bookingStart, bookingEnd)
+    })
+
+    if (!conflictingBooking) return ''
+
+    const conflictDate = new Date(conflictingBooking.startTime).toLocaleDateString(undefined, {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    })
+    const conflictStart = new Date(conflictingBooking.startTime).toLocaleTimeString(undefined, {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    })
+    const conflictEnd = new Date(conflictingBooking.endTime).toLocaleTimeString(undefined, {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    })
+
+    return `Scheduling conflict: this resource is already booked on ${conflictDate} from ${conflictStart} to ${conflictEnd}.`
+  }, [form.resourceId, form.date, form.startTime, form.endTime, existingBookings, editingBookingId])
 
   if (!isOpen) {
     return null
@@ -207,6 +260,11 @@ export default function BookingFormModal({
       return
     }
 
+    if (conflictMessage) {
+      setLocalError(conflictMessage)
+      return
+    }
+
     if (!purpose) {
       setLocalError('Purpose / description is required')
       return
@@ -239,37 +297,39 @@ export default function BookingFormModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/50 px-4 py-6 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-[radial-gradient(circle_at_20%_20%,rgba(125,211,252,0.22),rgba(2,6,23,0.78))] px-4 py-6 backdrop-blur-md">
       <form
         onSubmit={handleSubmit}
-        className="mx-auto w-full max-w-3xl rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_24px_46px_-24px_rgba(15,23,42,0.5)]"
+        className="mx-auto w-full max-w-3xl rounded-[1.75rem] border border-white/30 bg-white/18 p-6 shadow-[0_30px_70px_-30px_rgba(15,23,42,0.75)] backdrop-blur-xl"
       >
-        <div className="mb-6 flex items-start justify-between gap-3">
+        <div className="mb-6 rounded-2xl border border-cyan-200/30 bg-[linear-gradient(120deg,rgba(15,23,42,0.84),rgba(30,58,138,0.58))] px-5 py-4 text-white">
+          <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Institutional Logistics</p>
-            <h2 className="text-4xl font-bold tracking-tight text-slate-900">Booking Request</h2>
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-200/90">Institutional Logistics</p>
+            <h2 className="text-4xl font-bold tracking-tight text-white">Booking Request</h2>
+            <p className="mt-1 text-sm text-slate-200/90">
               {mode === 'edit' ? 'Update your pending request details.' : 'Fill in your slot request details.'}
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg border border-slate-300 bg-white/70 px-3 py-1 text-sm text-slate-700 hover:bg-slate-100"
+            className="rounded-lg border border-white/35 bg-white/10 px-3 py-1 text-sm text-white transition hover:bg-white/20"
           >
             Close
           </button>
+          </div>
         </div>
 
         {localError && (
-          <div className="mb-4 rounded-xl border border-rose-300 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+          <div className="mb-4 rounded-xl border border-rose-300/70 bg-rose-100/85 px-3 py-2 text-sm text-rose-800 shadow-sm backdrop-blur">
             {localError}
           </div>
         )}
 
         <div className="space-y-5">
-          <section className="space-y-3 rounded-xl border border-slate-200 bg-slate-50/60 p-4">
-            <h3 className="text-sm font-semibold text-slate-800">Student Identification</h3>
+          <section className="space-y-3 rounded-2xl border border-white/35 bg-white/45 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] backdrop-blur">
+            <h3 className="text-sm font-semibold text-slate-900">Student Identification</h3>
             <div className="grid gap-4 md:grid-cols-2">
               <label className="grid gap-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
                 Student ID
@@ -279,9 +339,10 @@ export default function BookingFormModal({
                   minLength={5}
                   maxLength={20}
                   value={form.studentId}
-                  onChange={(event) => setForm((prev) => ({ ...prev, studentId: event.target.value }))}
+                  readOnly
+                  aria-readonly="true"
                   placeholder="IT23566552"
-                  className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 focus:border-cyan-500 focus:outline-none"
+                  className="rounded-xl border border-slate-300/80 bg-slate-100 px-3 py-2 text-sm font-medium text-slate-700 focus:outline-none"
                 />
               </label>
 
@@ -293,9 +354,10 @@ export default function BookingFormModal({
                   minLength={3}
                   maxLength={80}
                   value={form.studentName}
-                  onChange={(event) => setForm((prev) => ({ ...prev, studentName: event.target.value }))}
+                  readOnly
+                  aria-readonly="true"
                   placeholder="Shyni Atapattu"
-                  className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 focus:border-cyan-500 focus:outline-none"
+                  className="rounded-xl border border-slate-300/80 bg-slate-100 px-3 py-2 text-sm font-medium text-slate-700 focus:outline-none"
                 />
               </label>
             </div>
@@ -308,15 +370,16 @@ export default function BookingFormModal({
                 minLength={2}
                 maxLength={80}
                 value={form.faculty}
-                onChange={(event) => setForm((prev) => ({ ...prev, faculty: event.target.value }))}
+                readOnly
+                aria-readonly="true"
                 placeholder="Computing"
-                className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 focus:border-cyan-500 focus:outline-none"
+                className="rounded-xl border border-slate-300/80 bg-slate-100 px-3 py-2 text-sm font-medium text-slate-700 focus:outline-none"
               />
             </label>
           </section>
 
-          <section className="space-y-3 rounded-xl border border-slate-200 bg-slate-50/60 p-4">
-            <h3 className="text-sm font-semibold text-slate-800">Resource Selection</h3>
+          <section className="space-y-3 rounded-2xl border border-white/35 bg-white/45 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] backdrop-blur">
+            <h3 className="text-sm font-semibold text-slate-900">Resource Selection</h3>
             <div className="grid gap-3 sm:grid-cols-2">
               <label className="grid gap-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
                 Resource
@@ -324,16 +387,21 @@ export default function BookingFormModal({
                   value={form.resourceId}
                   onChange={(event) => setForm((prev) => ({ ...prev, resourceId: event.target.value }))}
                   disabled={resourcesLoading || Boolean(resourcesError) || resources.length === 0}
-                  className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 focus:border-cyan-500 focus:outline-none"
+                  className="rounded-xl border border-slate-300/80 bg-white/75 px-3 py-2 text-sm font-medium text-slate-700 focus:border-cyan-500 focus:outline-none"
                 >
                   {resourcesLoading && <option value="">Loading resources...</option>}
                   {!resourcesLoading && resourcesError && <option value="">Failed to load resources</option>}
                   {!resourcesLoading && !resourcesError && resources.length === 0 && <option value="">No resources available</option>}
-                  {!resourcesLoading && !resourcesError && resources.map((resource) => (
-                    <option key={resource.id} value={resource.id}>
-                      {resource.name}
-                    </option>
-                  ))}
+                  {!resourcesLoading && !resourcesError && resources.length > 0 && (
+                    <>
+                      <option value="">Select resource</option>
+                      {resources.map((resource) => (
+                        <option key={resource.id} value={resource.id}>
+                          {resource.name}
+                        </option>
+                      ))}
+                    </>
+                  )}
                 </select>
                 {!resourcesLoading && resourcesError && (
                   <span className="text-[11px] normal-case text-rose-600">{resourcesError}</span>
@@ -345,15 +413,15 @@ export default function BookingFormModal({
                 <input
                   type="text"
                   readOnly
-                  value={selectedResource?.name || ''}
-                  className="w-full rounded-lg border border-slate-200 bg-slate-100 px-3 py-2.5 text-sm font-medium text-slate-600"
+                  value={selectedResource?.name || 'Select a resource'}
+                  className="w-full rounded-xl border border-slate-300/80 bg-white/55 px-3 py-2.5 text-sm font-medium text-slate-600"
                 />
               </label>
             </div>
           </section>
 
-          <section className="space-y-3 rounded-xl border border-slate-200 bg-slate-50/60 p-4">
-            <h3 className="text-sm font-semibold text-slate-800">Scheduling Details</h3>
+          <section className="space-y-3 rounded-2xl border border-white/35 bg-white/45 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] backdrop-blur">
+            <h3 className="text-sm font-semibold text-slate-900">Scheduling Details</h3>
             <div className="grid gap-4 md:grid-cols-3">
               <label className="grid gap-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
                 Date
@@ -363,7 +431,7 @@ export default function BookingFormModal({
                   required
                   value={form.date}
                   onChange={(event) => setForm((prev) => ({ ...prev, date: event.target.value }))}
-                  className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 focus:border-cyan-500 focus:outline-none"
+                  className="rounded-xl border border-slate-300/80 bg-white/75 px-3 py-2 text-sm font-medium text-slate-700 focus:border-cyan-500 focus:outline-none"
                 />
               </label>
 
@@ -373,7 +441,7 @@ export default function BookingFormModal({
                   required
                   value={form.startTime}
                   onChange={(event) => setForm((prev) => ({ ...prev, startTime: event.target.value }))}
-                  className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 focus:border-cyan-500 focus:outline-none"
+                  className="rounded-xl border border-slate-300/80 bg-white/75 px-3 py-2 text-sm font-medium text-slate-700 focus:border-cyan-500 focus:outline-none"
                 >
                   <option value="">Choose a start time</option>
                   {startTimeOptions.map((option) => (
@@ -391,7 +459,7 @@ export default function BookingFormModal({
                   required
                   value={form.endTime}
                   onChange={(event) => setForm((prev) => ({ ...prev, endTime: event.target.value }))}
-                  className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 focus:border-cyan-500 focus:outline-none"
+                  className="rounded-xl border border-slate-300/80 bg-white/75 px-3 py-2 text-sm font-medium text-slate-700 focus:border-cyan-500 focus:outline-none"
                 >
                   <option value="">Choose an end time</option>
                   {endTimeOptions.map((option) => (
@@ -403,10 +471,15 @@ export default function BookingFormModal({
                 <span className="text-[11px] normal-case text-slate-400">Must be later than start time</span>
               </label>
             </div>
+            {conflictMessage && (
+              <div className="rounded-xl border border-rose-300/70 bg-rose-100/85 px-3 py-2 text-xs normal-case text-rose-800 shadow-sm">
+                {conflictMessage}
+              </div>
+            )}
           </section>
 
-          <section className="space-y-3 rounded-xl border border-slate-200 bg-slate-50/60 p-4">
-            <h3 className="text-sm font-semibold text-slate-800">Purpose & Attendees</h3>
+          <section className="space-y-3 rounded-2xl border border-white/35 bg-white/45 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)] backdrop-blur">
+            <h3 className="text-sm font-semibold text-slate-900">Purpose & Attendees</h3>
             <label className="grid gap-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
               Research Purpose / Description
               <textarea
@@ -416,7 +489,7 @@ export default function BookingFormModal({
                 minLength={10}
                 value={form.purpose}
                 onChange={(event) => setForm((prev) => ({ ...prev, purpose: event.target.value }))}
-                className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 focus:border-cyan-500 focus:outline-none"
+                className="rounded-xl border border-slate-300/80 bg-white/75 px-3 py-2 text-sm font-medium text-slate-700 focus:border-cyan-500 focus:outline-none"
               />
             </label>
 
@@ -429,12 +502,12 @@ export default function BookingFormModal({
                 required
                 value={form.attendeesCount}
                 onChange={(event) => setForm((prev) => ({ ...prev, attendeesCount: event.target.value }))}
-                className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 focus:border-cyan-500 focus:outline-none"
+                className="rounded-xl border border-slate-300/80 bg-white/75 px-3 py-2 text-sm font-medium text-slate-700 focus:border-cyan-500 focus:outline-none"
               />
             </label>
           </section>
 
-          <div className="flex items-center justify-between gap-3 text-xs text-slate-500">
+          <div className="flex items-center justify-between gap-3 rounded-xl border border-white/35 bg-white/40 px-3 py-2 text-xs text-slate-600 backdrop-blur">
             <span>Responses are typically processed within 24 business hours.</span>
           </div>
         </div>
@@ -443,14 +516,14 @@ export default function BookingFormModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-xl border border-slate-300/80 bg-white/80 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
+            className="rounded-xl border border-slate-300/80 bg-white/70 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-white"
           >
             Cancel
           </button>
           <button
             type="submit"
-            disabled={submitting}
-            className="rounded-xl bg-cyan-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-cyan-700 disabled:cursor-not-allowed disabled:opacity-60"
+            disabled={submitting || Boolean(conflictMessage)}
+            className="rounded-xl bg-[linear-gradient(120deg,#0f172a,#1d4ed8)] px-4 py-2 text-sm font-semibold text-white shadow-[0_12px_30px_-18px_rgba(15,23,42,0.9)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {submitting ? 'Submitting...' : mode === 'edit' ? 'Update request' : 'Submit request'}
           </button>
