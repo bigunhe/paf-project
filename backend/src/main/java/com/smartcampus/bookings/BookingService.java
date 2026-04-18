@@ -6,6 +6,7 @@ import com.smartcampus.auth.model.UserType;
 import com.smartcampus.bookings.dto.BookingRequest;
 import com.smartcampus.bookings.dto.BookingResponse;
 import com.smartcampus.bookings.dto.BookingStatusPatchRequest;
+import com.smartcampus.bookings.dto.BookingUpdateRequest;
 import com.smartcampus.bookings.model.Booking;
 import com.smartcampus.bookings.model.BookingStatus;
 import com.smartcampus.core.exception.ConflictException;
@@ -16,6 +17,7 @@ import com.smartcampus.facilities.model.ResourceStatus;
 import com.smartcampus.notifications.NotificationService;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -133,6 +135,81 @@ public class BookingService {
 			b.setAdminReason(patch.adminReason());
 		}
 		return toResponse(bookingRepository.save(b));
+	}
+
+	public BookingResponse updateForUser(
+			String id, BookingUpdateRequest request, String principalUserId, boolean isAdmin) {
+		Booking booking = bookingRepository
+				.findById(id)
+				.orElseThrow(() -> new ResourceNotFoundException("Booking not found: " + id));
+
+		if (!isAdmin && !Objects.equals(booking.getUserId(), principalUserId)) {
+			throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You can only update your own booking");
+		}
+
+		if (booking.getStatus() == BookingStatus.CANCELLED || booking.getStatus() == BookingStatus.REJECTED) {
+			throw new ConflictException("Only pending or approved bookings can be modified");
+		}
+
+		if (!request.startTime().isBefore(request.endTime())) {
+			throw new IllegalArgumentException("startTime must be before endTime");
+		}
+
+		Resource resource = resourceService.getEntityById(request.resourceId());
+		if (resource.getStatus() != ResourceStatus.ACTIVE) {
+			throw new ConflictException("Resource is not available for booking");
+		}
+
+		assertNoOverlap(request.resourceId(), request.startTime(), request.endTime(), booking.getId());
+
+		booking.setResourceId(request.resourceId());
+		booking.setStartTime(request.startTime());
+		booking.setEndTime(request.endTime());
+		booking.setPurpose(request.purpose());
+		booking.setExpectedAttendees(request.expectedAttendees());
+		booking.setAdminReason(null);
+
+		Booking saved = bookingRepository.save(booking);
+		return toResponse(saved);
+	}
+
+	public BookingResponse cancelForUser(String id, String principalUserId, boolean isAdmin) {
+		Booking booking = bookingRepository
+				.findById(id)
+				.orElseThrow(() -> new ResourceNotFoundException("Booking not found: " + id));
+
+		if (!isAdmin && !Objects.equals(booking.getUserId(), principalUserId)) {
+			throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You can only cancel your own booking");
+		}
+
+		if (booking.getStatus() == BookingStatus.CANCELLED) {
+			return toResponse(booking);
+		}
+
+		if (booking.getStatus() == BookingStatus.REJECTED) {
+			throw new ConflictException("Rejected bookings cannot be cancelled");
+		}
+
+		booking.setStatus(BookingStatus.CANCELLED);
+		booking.setAdminReason("Cancelled by user");
+		Booking saved = bookingRepository.save(booking);
+		return toResponse(saved);
+	}
+
+	public void deleteForUser(String id, String principalUserId, boolean isAdmin) {
+		Booking booking = bookingRepository
+				.findById(id)
+				.orElseThrow(() -> new ResourceNotFoundException("Booking not found: " + id));
+
+		if (!isAdmin && !Objects.equals(booking.getUserId(), principalUserId)) {
+			throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You can only delete your own booking");
+		}
+
+		if (booking.getStatus() != BookingStatus.REJECTED && booking.getStatus() != BookingStatus.CANCELLED) {
+			throw new ConflictException("Only rejected or cancelled bookings can be deleted");
+		}
+
+		bookingRepository.deleteById(id);
 	}
 
 	private void assertNoOverlap(
