@@ -84,12 +84,6 @@ export default function Layout() {
                 <NavLink to="/app/account" className={navClass}>
                   My Account
                 </NavLink>
-                <Link
-                  to="/app"
-                  className="px-3 py-2 rounded-lg text-sm font-medium text-blue-700 hover:bg-blue-50"
-                >
-                  Student portal
-                </Link>
               </>
             )}
 
@@ -114,7 +108,9 @@ export default function Layout() {
           </nav>
         </div>
       </header>
-      <main className="max-w-6xl mx-auto px-4 py-8">
+      <main
+        className={`mx-auto px-4 py-8 ${inAdminArea ? 'max-w-7xl' : 'max-w-6xl'}`}
+      >
         <Outlet />
       </main>
     </div>

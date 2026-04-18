@@ -1,21 +1,22 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { OAUTH_GOOGLE_URL } from './constants'
-import PageHero from './PageHero'
-import { PRIMARY_BUTTON_CLASS } from './ui'
 
 const highlights = [
   {
     title: 'Find and book campus resources',
     desc: 'Browse rooms, labs, and equipment in one place.',
+    chip: 'Browse',
   },
   {
     title: 'Track bookings and approvals',
     desc: 'Students request slots, staff review and approve quickly.',
+    chip: 'Bookings',
   },
   {
     title: 'Report incidents and stay updated',
     desc: 'Submit issues, follow status, and receive alert updates.',
+    chip: 'Safety',
   },
 ]
 
@@ -67,29 +68,54 @@ export default function HomePage() {
 
   return (
     <div className="space-y-14">
-      <PageHero
-        eyebrow="Smart Campus Hub"
-        title="One portal for campus spaces, requests, and operations"
-        description="Manage campus operations with a single system for facilities, booking requests, incident reporting, and notification updates. Students and staff use the same platform with role-appropriate dashboards."
-      />
-      <section className="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 sm:p-8">
-        <div className="flex flex-wrap items-center gap-4">
-          <p className="text-sm text-slate-600 max-w-xl">
+      <div className="overflow-hidden rounded-[1.75rem] border border-slate-200 bg-gradient-to-br from-[#0f172a] via-[#111c38] to-[#0b1020] shadow-[0_22px_45px_-30px_rgba(15,23,42,0.75)]">
+        <div className="grid lg:grid-cols-[1.05fr_minmax(0,0.95fr)]">
+          <div className="flex flex-col justify-center px-5 py-8 text-white sm:px-8 sm:py-10 lg:py-12">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-cyan-200/85">Smart Campus Hub</p>
+            <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
+              One portal for campus spaces, requests, and operations
+            </h1>
+            <p className="mt-4 max-w-xl text-sm leading-relaxed text-slate-300 sm:text-[15px]">
+              Book rooms and equipment, follow approvals, and report facility issues in one place—built for students, lecturers, and staff
+              with role-aware workflows.
+            </p>
+          </div>
+          <div
+            className="relative min-h-[220px] border-t border-white/10 bg-slate-900 bg-cover bg-center lg:min-h-[300px] lg:border-l lg:border-t-0"
+            style={{
+              backgroundImage:
+                "linear-gradient(120deg, rgba(15,23,42,0.88) 0%, rgba(14,116,144,0.35) 45%, rgba(15,23,42,0.25) 100%), url('/study1.jpg')",
+            }}
+            role="presentation"
+            aria-hidden
+          />
+        </div>
+        <div className="flex flex-col gap-4 border-t border-white/10 bg-black/20 px-5 py-5 backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between sm:px-8">
+          <p className="max-w-xl text-sm text-slate-200">
             Sign in with your campus Google account or a local development account to access bookings, resources, and incident reporting.
           </p>
-          <Link to="/login" className={`inline-flex py-2 px-4 text-sm ${PRIMARY_BUTTON_CLASS}`}>
+          <Link
+            to="/login"
+            className="inline-flex h-11 shrink-0 items-center justify-center rounded-xl bg-white px-6 text-sm font-semibold text-slate-950 shadow transition hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+          >
             Sign in
           </Link>
         </div>
-      </section>
+      </div>
 
       <section>
         <h2 className="text-xl font-semibold text-slate-900 mb-5">What you can do</h2>
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-5 md:grid-cols-3">
           {highlights.map((item) => (
-            <article key={item.title} className="bg-white border border-slate-200 rounded-xl shadow-sm p-5">
-              <h3 className="text-base font-medium text-slate-900 mb-2">{item.title}</h3>
-              <p className="text-slate-500 text-sm">{item.desc}</p>
+            <article
+              key={item.title}
+              className="relative overflow-hidden rounded-2xl border border-slate-200/90 bg-gradient-to-b from-white to-sky-50/40 p-6 shadow-[0_14px_34px_-28px_rgba(15,23,42,0.45)] ring-1 ring-sky-100/80"
+            >
+              <span className="inline-flex rounded-full border border-sky-200/80 bg-sky-50 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-sky-800">
+                {item.chip}
+              </span>
+              <h3 className="mt-4 text-lg font-semibold text-slate-900">{item.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-slate-600">{item.desc}</p>
             </article>
           ))}
         </div>
@@ -107,7 +133,7 @@ export default function HomePage() {
               <article key={item.q} className="bg-white border border-slate-200 rounded-xl shadow-sm">
                 <button
                   type="button"
-                  className="w-full text-left px-5 py-4 flex items-center justify-between gap-4"
+                  className="w-full text-left px-5 py-4 flex items-center justify-between gap-4 rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500"
                   onClick={() => setOpenFaq(isOpen ? -1 : idx)}
                   aria-expanded={isOpen}
                 >
@@ -136,13 +162,13 @@ export default function HomePage() {
           <div>
             <h3 className="text-sm font-semibold text-slate-900">Quick links</h3>
             <div className="mt-2 space-y-1 text-sm">
-              <Link to="/login" className="block text-blue-600 hover:underline">
+              <Link to="/login" className="block text-blue-600 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500 rounded-sm">
                 Sign in
               </Link>
-              <Link to="/app/resources" className="block text-blue-600 hover:underline">
+              <Link to="/app/resources" className="block text-blue-600 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500 rounded-sm">
                 Browse resources
               </Link>
-              <Link to="/app/report" className="block text-blue-600 hover:underline">
+              <Link to="/app/report" className="block text-blue-600 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-500 rounded-sm">
                 Report issue
               </Link>
             </div>
