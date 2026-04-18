@@ -1,8 +1,12 @@
 package com.smartcampus.bookings;
 
+import com.smartcampus.auth.UserService;
+import com.smartcampus.auth.model.User;
+import com.smartcampus.auth.model.UserType;
 import com.smartcampus.bookings.dto.BookingRequest;
 import com.smartcampus.bookings.dto.BookingResponse;
 import com.smartcampus.bookings.dto.BookingStatusPatchRequest;
+import com.smartcampus.bookings.dto.BookingUpdateRequest;
 import com.smartcampus.bookings.model.Booking;
 import com.smartcampus.bookings.model.BookingStatus;
 import com.smartcampus.core.exception.ConflictException;
@@ -13,7 +17,10 @@ import com.smartcampus.facilities.model.ResourceStatus;
 import com.smartcampus.notifications.NotificationService;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class BookingService {
@@ -21,14 +28,17 @@ public class BookingService {
 	private final BookingRepository bookingRepository;
 	private final ResourceService resourceService;
 	private final NotificationService notificationService;
+	private final UserService userService;
 
 	public BookingService(
 			BookingRepository bookingRepository,
 			ResourceService resourceService,
-			NotificationService notificationService) {
+			NotificationService notificationService,
+			UserService userService) {
 		this.bookingRepository = bookingRepository;
 		this.resourceService = resourceService;
 		this.notificationService = notificationService;
+		this.userService = userService;
 	}
 
 	public List<BookingResponse> list(String userId) {
@@ -43,6 +53,21 @@ public class BookingService {
 		if (!req.startTime().isBefore(req.endTime())) {
 			throw new IllegalArgumentException("startTime must be before endTime");
 		}
+		assertSlotNotInPast(req.startTime(), req.endTime());
+		User booker = userService.getEntityById(req.userId());
+		if (!Boolean.TRUE.equals(booker.getProfileCompleted())) {
+			throw new ResponseStatusException(
+					HttpStatus.FORBIDDEN, "Complete your profile before creating a booking");
+		}
+		UserType userType = booker.getUserType() != null ? booker.getUserType() : UserType.UNASSIGNED;
+		if (userType == UserType.UNASSIGNED) {
+			throw new ResponseStatusException(
+					HttpStatus.FORBIDDEN, "Complete your profile before creating a booking");
+		}
+		// LECTURER: auto-approved when no conflict. STUDENT/STAFF: pending admin review.
+		BookingStatus initialStatus =
+				userType == UserType.LECTURER ? BookingStatus.APPROVED : BookingStatus.PENDING;
+
 		Resource resource = resourceService.getEntityById(req.resourceId());
 		if (resource.getStatus() != ResourceStatus.ACTIVE) {
 			throw new ConflictException("Resource is not available for booking");
@@ -56,11 +81,19 @@ public class BookingService {
 				.endTime(req.endTime())
 				.purpose(req.purpose())
 				.expectedAttendees(req.expectedAttendees())
-				.status(BookingStatus.PENDING)
+				.status(initialStatus)
 				.adminReason(null)
 				.createdAt(LocalDateTime.now())
 				.build();
-		return toResponse(bookingRepository.save(b));
+		Booking saved = bookingRepository.save(b);
+		if (initialStatus == BookingStatus.PENDING) {
+			notificationService.notifyAdmins(
+					NotificationService.TYPE_BOOKING_UPDATE,
+					"New booking request from " + booker.getName() + " for " + resource.getName() + ".",
+					"/admin/bookings",
+					saved.getId());
+		}
+		return toResponse(saved);
 	}
 
 	public BookingResponse patchStatus(String id, BookingStatusPatchRequest patch) {
@@ -77,7 +110,9 @@ public class BookingService {
 			notificationService.create(
 					b.getUserId(),
 					NotificationService.TYPE_BOOKING_UPDATE,
-					"Your booking for " + r.getName() + " was APPROVED.");
+					"Your booking for " + r.getName() + " was APPROVED.",
+					"/app/bookings",
+					saved.getId());
 			return toResponse(saved);
 		}
 
@@ -90,7 +125,9 @@ public class BookingService {
 					b.getUserId(),
 					NotificationService.TYPE_BOOKING_UPDATE,
 					"Your booking for " + r.getName() + " was REJECTED."
-							+ (patch.adminReason() != null ? " Reason: " + patch.adminReason() : ""));
+							+ (patch.adminReason() != null ? " Reason: " + patch.adminReason() : ""),
+					"/app/bookings",
+					saved.getId());
 			return toResponse(saved);
 		}
 
@@ -99,6 +136,92 @@ public class BookingService {
 			b.setAdminReason(patch.adminReason());
 		}
 		return toResponse(bookingRepository.save(b));
+	}
+
+	public BookingResponse updateForUser(
+			String id, BookingUpdateRequest request, String principalUserId, boolean isAdmin) {
+		Booking booking = bookingRepository
+				.findById(id)
+				.orElseThrow(() -> new ResourceNotFoundException("Booking not found: " + id));
+
+		if (!isAdmin && !Objects.equals(booking.getUserId(), principalUserId)) {
+			throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You can only update your own booking");
+		}
+
+		if (booking.getStatus() == BookingStatus.CANCELLED || booking.getStatus() == BookingStatus.REJECTED) {
+			throw new ConflictException("Only pending or approved bookings can be modified");
+		}
+
+		if (!request.startTime().isBefore(request.endTime())) {
+			throw new IllegalArgumentException("startTime must be before endTime");
+		}
+		assertSlotNotInPast(request.startTime(), request.endTime());
+
+		Resource resource = resourceService.getEntityById(request.resourceId());
+		if (resource.getStatus() != ResourceStatus.ACTIVE) {
+			throw new ConflictException("Resource is not available for booking");
+		}
+
+		assertNoOverlap(request.resourceId(), request.startTime(), request.endTime(), booking.getId());
+
+		booking.setResourceId(request.resourceId());
+		booking.setStartTime(request.startTime());
+		booking.setEndTime(request.endTime());
+		booking.setPurpose(request.purpose());
+		booking.setExpectedAttendees(request.expectedAttendees());
+		booking.setAdminReason(null);
+
+		Booking saved = bookingRepository.save(booking);
+		return toResponse(saved);
+	}
+
+	public BookingResponse cancelForUser(String id, String principalUserId, boolean isAdmin) {
+		Booking booking = bookingRepository
+				.findById(id)
+				.orElseThrow(() -> new ResourceNotFoundException("Booking not found: " + id));
+
+		if (!isAdmin && !Objects.equals(booking.getUserId(), principalUserId)) {
+			throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You can only cancel your own booking");
+		}
+
+		if (booking.getStatus() == BookingStatus.CANCELLED) {
+			return toResponse(booking);
+		}
+
+		if (booking.getStatus() == BookingStatus.REJECTED) {
+			throw new ConflictException("Rejected bookings cannot be cancelled");
+		}
+
+		booking.setStatus(BookingStatus.CANCELLED);
+		booking.setAdminReason("Cancelled by user");
+		Booking saved = bookingRepository.save(booking);
+		return toResponse(saved);
+	}
+
+	public void deleteForUser(String id, String principalUserId, boolean isAdmin) {
+		Booking booking = bookingRepository
+				.findById(id)
+				.orElseThrow(() -> new ResourceNotFoundException("Booking not found: " + id));
+
+		if (!isAdmin && !Objects.equals(booking.getUserId(), principalUserId)) {
+			throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You can only delete your own booking");
+		}
+
+		if (booking.getStatus() != BookingStatus.REJECTED && booking.getStatus() != BookingStatus.CANCELLED) {
+			throw new ConflictException("Only rejected or cancelled bookings can be deleted");
+		}
+
+		bookingRepository.deleteById(id);
+	}
+
+	private static void assertSlotNotInPast(LocalDateTime start, LocalDateTime end) {
+		LocalDateTime now = LocalDateTime.now();
+		if (!start.isAfter(now)) {
+			throw new IllegalArgumentException("Booking start time must be in the future");
+		}
+		if (!end.isAfter(now)) {
+			throw new IllegalArgumentException("Booking end time must be in the future");
+		}
 	}
 
 	private void assertNoOverlap(

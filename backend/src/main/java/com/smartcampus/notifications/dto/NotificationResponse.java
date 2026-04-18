@@ -7,6 +7,8 @@ public record NotificationResponse(
 		String userId,
 		String type,
 		String message,
+		String linkPath,
+		String entityId,
 		boolean isRead,
 		LocalDateTime createdAt
 ) {

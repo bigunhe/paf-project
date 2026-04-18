@@ -1,0 +1,29 @@
+import { Link } from 'react-router-dom'
+import PageHero from './PageHero'
+import { PRIMARY_BUTTON_CLASS } from './ui'
+
+export default function NotFoundPage() {
+  return (
+    <div className="space-y-6 max-w-lg">
+      <PageHero
+        eyebrow="Error"
+        title="Page not found"
+        description="That URL is not part of the Smart Campus Hub. Check the address or go back to the student or staff home."
+      />
+      <div className="flex flex-wrap gap-3">
+        <Link
+          to="/app"
+          className={`inline-flex py-2 px-4 text-sm ${PRIMARY_BUTTON_CLASS}`}
+        >
+          Student home
+        </Link>
+        <Link
+          to="/admin"
+          className="inline-flex bg-slate-200 hover:bg-slate-300 text-slate-900 rounded-lg py-2 px-4 text-sm font-medium"
+        >
+          Staff home
+        </Link>
+      </div>
+    </div>
+  )
+}

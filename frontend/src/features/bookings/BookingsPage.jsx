@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import api from '../core/api'
 import { useAuth } from '../core/AuthContext'
+import { PRIMARY_BUTTON_CLASS } from '../core/ui'
 
 export default function BookingsPage() {
   const { currentUserId, isAdmin } = useAuth()
@@ -19,12 +20,18 @@ export default function BookingsPage() {
     const params = isAdmin ? {} : { userId: currentUserId }
     const [{ data: b }, { data: r }] = await Promise.all([
       api.get('/bookings', { params }),
-      api.get('/resources'),
+      api.get('/resources', { params: { status: 'ACTIVE' } }),
     ])
     setBookings(b)
     setResources(r)
-    if (!form.resourceId && r[0]?.id) {
-      setForm((f) => ({ ...f, resourceId: r[0].id }))
+    const firstId = r.find((res) => res.status === 'ACTIVE')?.id
+    if (firstId) {
+      setForm((f) => {
+        const ok = r.some((res) => res.id === f.resourceId)
+        return ok ? f : { ...f, resourceId: firstId }
+      })
+    } else {
+      setForm((f) => ({ ...f, resourceId: '' }))
     }
   }
 
@@ -59,9 +66,13 @@ export default function BookingsPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-semibold text-slate-900">Bookings</h1>
+        <h1 className="text-2xl font-semibold text-slate-900">
+          {isAdmin ? 'Booking approvals' : 'My bookings'}
+        </h1>
         <p className="text-slate-500">
-          {isAdmin ? 'All booking requests (admin).' : 'Your booking requests.'}
+          {isAdmin
+            ? 'Review pending requests and approve or reject (Member 2 admin surface).'
+            : 'Request a slot and track your requests (Member 2 user surface).'}
         </p>
       </div>
 
@@ -77,17 +88,23 @@ export default function BookingsPage() {
           <h2 className="text-lg font-medium text-slate-900">Request a booking</h2>
           <div className="grid gap-2">
             <label className="text-sm text-slate-500">Resource</label>
-            <select
-              value={form.resourceId}
-              onChange={(e) => setForm((f) => ({ ...f, resourceId: e.target.value }))}
-              className="border border-slate-200 rounded-lg px-3 py-2"
-            >
-              {resources.map((r) => (
-                <option key={r.id} value={r.id}>
-                  {r.name} ({r.type})
-                </option>
-              ))}
-            </select>
+            {resources.length === 0 ? (
+              <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                No active resources available to book.
+              </p>
+            ) : (
+              <select
+                value={form.resourceId}
+                onChange={(e) => setForm((f) => ({ ...f, resourceId: e.target.value }))}
+                className="border border-slate-200 rounded-lg px-3 py-2"
+              >
+                {resources.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.name} ({r.type})
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
           <div className="grid sm:grid-cols-2 gap-4">
             <div className="grid gap-2">
@@ -130,7 +147,11 @@ export default function BookingsPage() {
               className="border border-slate-200 rounded-lg px-3 py-2"
             />
           </div>
-          <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-2 px-4 w-fit">
+          <button
+            type="submit"
+            disabled={resources.length === 0}
+            className={`w-fit py-2 px-4 ${PRIMARY_BUTTON_CLASS}`}
+          >
             Submit request
           </button>
         </form>
