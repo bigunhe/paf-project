@@ -134,7 +134,7 @@ export default function TicketsPage() {
         category: data.category,
         description: data.description,
         priority: data.priority,
-        contactDetails: data.contactDetails
+        contactDetails: digitsOnlyContact(String(data.contactDetails ?? '')),
       })
     } catch (err) {
       setError(err.response?.data?.message || err.message)
@@ -143,21 +143,28 @@ export default function TicketsPage() {
 
   const handleDelete = async () => {
     if (!window.confirm("Are you sure you want to delete this ticket? This cannot be undone.")) return
+    setError('')
     try {
       await api.delete(`/tickets/${selected.id}`)
       toast.success("Ticket deleted")
       setSelected(null)
       await load()
     } catch (err) {
-      setError(err.response?.data?.message || err.message)
+      const msg =
+        err.response?.data?.message || err.response?.data?.error || err.message || 'Delete failed'
+      setError(msg)
+      toast.error(msg)
     }
   }
 
   const handleUpdate = async (e) => {
     e.preventDefault()
+    setError('')
     try {
       if (editForm.contactDetails?.length !== 10) {
-        setError("Contact number must be exactly 10 digits")
+        const msg = 'Contact number must be exactly 10 digits'
+        setError(msg)
+        toast.error(msg)
         return
       }
       await api.put(`/tickets/${selected.id}`, editForm)
@@ -166,7 +173,10 @@ export default function TicketsPage() {
       await openDetail(selected.id)
       await load()
     } catch (err) {
-      setError(err.response?.data?.message || err.message)
+      const msg =
+        err.response?.data?.message || err.response?.data?.error || err.message || 'Update failed'
+      setError(msg)
+      toast.error(msg)
     }
   }
 
@@ -476,6 +486,7 @@ export default function TicketsPage() {
                 <div className="flex items-center gap-2">
                   {!isEditing && (isAdmin || selected.userId === currentUserId) && selected.status !== 'RESOLVED' && selected.status !== 'CLOSED' && (
                     <button
+                      type="button"
                       onClick={() => setIsEditing(true)}
                       className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors border border-transparent hover:border-blue-200"
                       title="Edit Ticket"
@@ -485,6 +496,7 @@ export default function TicketsPage() {
                   )}
                   {!isEditing && (isAdmin || selected.userId === currentUserId) && (
                     <button
+                      type="button"
                       onClick={handleDelete}
                       className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-200"
                       title="Delete Ticket"
@@ -506,6 +518,9 @@ export default function TicketsPage() {
                         onChange={e => setEditForm(f => ({ ...f, category: e.target.value }))}
                         className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
                       >
+                        {editForm.category && !CATEGORIES.includes(editForm.category) && (
+                          <option value={editForm.category}>{editForm.category} (current)</option>
+                        )}
                         {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                       </select>
                     </div>
