@@ -66,25 +66,38 @@ public class UserService {
 			throw new IllegalArgumentException("userType must be STUDENT, LECTURER, or STAFF");
 		}
 		User u = getEntityById(userId);
+		if (Boolean.TRUE.equals(u.getProfileCompleted())) {
+			throw new IllegalArgumentException("Profile is already complete; use account settings to update details");
+		}
+		String contact = request.contactNumber().trim();
+		String academic = request.academicUnit().trim();
+		String uniId = ProfileFieldValidator.normalizeUniversityId(request.universityId());
+		ProfileFieldValidator.validateProfileFields(request.userType(), academic, uniId);
 		u.setUserType(request.userType());
-		u.setContactNumber(request.contactNumber().trim());
-		u.setUniversityId(request.universityId().trim());
-		u.setAcademicUnit(request.academicUnit().trim());
+		u.setContactNumber(contact);
+		u.setUniversityId(uniId);
+		u.setAcademicUnit(academic);
 		u.setProfileCompleted(true);
 		return toResponse(userRepository.save(u));
 	}
 
 	public UserResponse updateAccount(String userId, UserAccountPatchRequest request) {
-		if (request.userType() == UserType.UNASSIGNED) {
-			throw new IllegalArgumentException("userType must be STUDENT, LECTURER, or STAFF");
-		}
 		User u = getEntityById(userId);
+		if (!Boolean.TRUE.equals(u.getProfileCompleted())) {
+			throw new IllegalArgumentException("Complete your profile before editing account details");
+		}
+		UserType existingType = u.getUserType() != null ? u.getUserType() : UserType.UNASSIGNED;
+		if (existingType == UserType.UNASSIGNED) {
+			throw new IllegalArgumentException("Complete your profile before editing account details");
+		}
+		String contact = request.contactNumber().trim();
+		String academic = request.academicUnit().trim();
+		String uniId = ProfileFieldValidator.normalizeUniversityId(request.universityId());
+		ProfileFieldValidator.validateProfileFields(existingType, academic, uniId);
 		u.setName(request.name().trim());
-		u.setUserType(request.userType());
-		u.setContactNumber(request.contactNumber().trim());
-		u.setUniversityId(request.universityId().trim());
-		u.setAcademicUnit(request.academicUnit().trim());
-		u.setProfileCompleted(true);
+		u.setContactNumber(contact);
+		u.setUniversityId(uniId);
+		u.setAcademicUnit(academic);
 		return toResponse(userRepository.save(u));
 	}
 
