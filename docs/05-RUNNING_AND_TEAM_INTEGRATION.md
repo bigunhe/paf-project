@@ -1,5 +1,7 @@
 # Running the MVP and how teammates plug in
 
+For **viva-style walkthroughs** (exact files, functions, and flows across frontend and backend), see **[VIVA_CODE_WALKTHROUGH_PLAYBOOK.md](VIVA_CODE_WALKTHROUGH_PLAYBOOK.md)**.
+
 **Windows teammates:** use the step-by-step PowerShell guide in **[07-WINDOWS_LOCAL_SETUP.md](07-WINDOWS_LOCAL_SETUP.md)** (clone `development`, `application-local.properties`, `mvnw.cmd`, `npm run dev`).
 
 ## See it running live
