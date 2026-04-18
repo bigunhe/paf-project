@@ -1,7 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 
-function getToday() {
-  return new Date().toISOString().slice(0, 10)
+/** Calendar day YYYY-MM-DD in the user's local timezone (matches &lt;input type="date"&gt;). */
+function getTodayLocal() {
+  const d = new Date()
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
 }
 
 function isValidTimeRange(startTime, endTime) {
@@ -11,7 +16,17 @@ function isValidTimeRange(startTime, endTime) {
 
 function isPastDate(dateValue) {
   if (!dateValue) return true
-  return dateValue < getToday()
+  return dateValue < getTodayLocal()
+}
+
+function isSameLocalCalendarDay(dateStr) {
+  return Boolean(dateStr && dateStr === getTodayLocal())
+}
+
+/** True if combining date + time yields a moment strictly after now (local parsing). */
+function isDateTimeInFuture(dateStr, timeStr) {
+  const dt = toDateTime(dateStr, timeStr)
+  return Boolean(dt && dt.getTime() > Date.now())
 }
 
 function formatTimeLabel(timeValue) {
@@ -74,7 +89,7 @@ export default function BookingFormModal({
     studentName: '',
     faculty: '',
     resourceId: '',
-    date: getToday(),
+    date: getTodayLocal(),
     startTime: '',
     endTime: '',
     purpose: '',
@@ -92,7 +107,7 @@ export default function BookingFormModal({
         studentName: initialValues.studentName || '',
         faculty: initialValues.faculty || '',
         resourceId: initialValues.resourceId || '',
-        date: initialValues.date || getToday(),
+        date: initialValues.date || getTodayLocal(),
         startTime: initialValues.startTime || '',
         endTime: initialValues.endTime || '',
         purpose: initialValues.purpose || '',
@@ -106,7 +121,7 @@ export default function BookingFormModal({
       studentName: '',
       faculty: '',
       resourceId: '',
-      date: getToday(),
+      date: getTodayLocal(),
       startTime: '',
       endTime: '',
       purpose: '',
@@ -130,26 +145,61 @@ export default function BookingFormModal({
     }
   }, [form.startTime, form.endTime])
 
+  /** Clear times that are no longer valid (e.g. today + slot already passed). */
+  useEffect(() => {
+    if (!form.date) return
+    if (form.startTime && !isDateTimeInFuture(form.date, form.startTime)) {
+      setForm((prev) => ({ ...prev, startTime: '', endTime: '' }))
+      return
+    }
+    if (form.endTime && !isDateTimeInFuture(form.date, form.endTime)) {
+      setForm((prev) => ({ ...prev, endTime: '' }))
+    }
+  }, [form.date, form.startTime, form.endTime])
+
   const selectedResource = useMemo(
     () => resources.find((resource) => resource.id === form.resourceId),
     [resources, form.resourceId],
   )
 
   const startTimeOptions = useMemo(() => {
-    const options = buildTimeOptions(30)
-    if (form.startTime && !options.some((option) => option.value === form.startTime)) {
+    let options = buildTimeOptions(30)
+    if (form.date && isSameLocalCalendarDay(form.date)) {
+      const now = Date.now()
+      options = options.filter((option) => {
+        const t = toDateTime(form.date, option.value)
+        return t && t.getTime() > now
+      })
+    }
+    if (
+      form.startTime &&
+      !options.some((option) => option.value === form.startTime) &&
+      isDateTimeInFuture(form.date, form.startTime)
+    ) {
       options.unshift({ value: form.startTime, label: formatTimeLabel(form.startTime) })
     }
     return options
-  }, [form.startTime])
+  }, [form.date, form.startTime])
 
   const endTimeOptions = useMemo(() => {
-    const options = buildTimeOptions(30).filter((option) => !form.startTime || option.value > form.startTime)
-    if (form.endTime && !options.some((option) => option.value === form.endTime)) {
+    const now = Date.now()
+    let options = buildTimeOptions(30).filter((option) => !form.startTime || option.value > form.startTime)
+    if (form.date && isSameLocalCalendarDay(form.date)) {
+      options = options.filter((option) => {
+        const t = toDateTime(form.date, option.value)
+        return t && t.getTime() > now
+      })
+    }
+    if (
+      form.endTime &&
+      !options.some((option) => option.value === form.endTime) &&
+      isDateTimeInFuture(form.date, form.endTime) &&
+      (!form.startTime || form.endTime > form.startTime)
+    ) {
       options.unshift({ value: form.endTime, label: formatTimeLabel(form.endTime) })
     }
     return options
-  }, [form.startTime, form.endTime])
+  }, [form.date, form.startTime, form.endTime])
 
   const conflictMessage = useMemo(() => {
     if (!form.resourceId || !form.date || !form.startTime || !form.endTime) return ''
@@ -257,6 +307,17 @@ export default function BookingFormModal({
 
     if (!isValidTimeRange(form.startTime, form.endTime)) {
       setLocalError('Start time must be earlier than end time')
+      return
+    }
+
+    const slotStart = toDateTime(form.date, form.startTime)
+    const slotEnd = toDateTime(form.date, form.endTime)
+    if (!slotStart || slotStart.getTime() <= Date.now()) {
+      setLocalError('Start time must be in the future.')
+      return
+    }
+    if (!slotEnd || slotEnd.getTime() <= Date.now()) {
+      setLocalError('End time must be in the future.')
       return
     }
 
@@ -427,7 +488,7 @@ export default function BookingFormModal({
                 Date
                 <input
                   type="date"
-                  min={getToday()}
+                  min={getTodayLocal()}
                   required
                   value={form.date}
                   onChange={(event) => setForm((prev) => ({ ...prev, date: event.target.value }))}
