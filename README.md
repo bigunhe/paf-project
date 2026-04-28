@@ -83,7 +83,7 @@ http://localhost:8080/api/v1/auth/dev-login?as=user
 http://localhost:8080/api/v1/auth/dev-login?as=admin
 ```
 
-###Troubleshooting
+### Troubleshooting
 
 Port already in use? – Change port in application.properties
 
